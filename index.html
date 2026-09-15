@@ -467,6 +467,21 @@
     #printArea, #printArea *{visibility:visible;}
     #printArea{position:absolute;top:0;left:0;width:100%;}
   }
+
+  /* ---- Vista de escritorio/navegador normal: la app deja de ir "pegada" a ancho móvil ---- */
+  @media (min-width: 860px){
+    body{padding:28px 0;align-items:flex-start;}
+    #app{
+      max-width:1180px;
+      height:calc(100vh - 56px);
+      border-radius:10px;
+      overflow:hidden;
+      box-shadow:0 10px 34px rgba(0,0,0,0.18);
+    }
+    .login-screen{max-width:420px;margin:0 auto;padding-top:48px;}
+    .home-screen{max-width:820px;margin:0 auto;width:100%;}
+    .nav-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  }
 </style>
 </head>
 <body>

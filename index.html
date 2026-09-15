@@ -84,17 +84,10 @@
   .log-line.share .t + span{color:var(--orange);}
 
   /* ---- Matrícula ---- */
-  .plate-es{display:inline-flex;align-items:stretch;border-radius:3px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.5);vertical-align:middle;}
-  .plate-es .eu-band{width:13px;background:#003399;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5px;line-height:1;padding:1px 0;}
-  .plate-es .eu-band .stars{font-size:5px;}
-  .plate-es .eu-band .cc{font-size:6px;font-weight:700;margin-top:1px;}
-  .plate-es .plate-body{background:#fff;color:#111;display:flex;align-items:center;padding:0 6px;font-weight:700;letter-spacing:1.2px;font-family:Arial,'Helvetica Neue',sans-serif;}
-  .plate-es.blue .plate-body{background:#0B3C8C;color:#fff;}
-  .plate-es.sm{height:20px;}
-  .plate-es.sm .plate-body{font-size:12px;}
-  .plate-es.md{height:28px;}
-  .plate-es.md .eu-band{width:16px;}
-  .plate-es.md .plate-body{font-size:15px;}
+  .plate-es{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:3px;background:#F4F6F9;padding:2px 8px;font-family:var(--font-mono);font-weight:700;letter-spacing:0.6px;color:var(--text);vertical-align:middle;}
+  .plate-es.blue{border-left:3px solid var(--orange);}
+  .plate-es.sm{font-size:12px;padding:2px 7px;}
+  .plate-es.md{font-size:15px;padding:4px 10px;}
 
   /* ---- Pantalla inicio ---- */
   .home-screen{display:flex;flex-direction:column;gap:14px;}
@@ -441,7 +434,7 @@
   .task-row-top{display:flex;align-items:center;justify-content:space-between;}
   .task-tipo{font-size:13px;font-weight:700;}
   .task-meta{font-size:11.5px;color:var(--muted);margin-top:3px;}
-  .task-del{background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer;line-height:1;}
+  .task-del, .material-del{background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer;line-height:1;}
   .veh-status-banner{display:flex;align-items:center;justify-content:space-between;background:var(--panel-alt);border:1px solid var(--border);border-radius:6px;padding:10px 13px;margin-bottom:12px;}
   .toggle-inactive-btn{background:var(--panel-alt);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:7px 11px;font-size:12px;font-family:var(--font-display);cursor:pointer;font-weight:600;}
   .toggle-inactive-btn.is-inactive{background:rgba(176,0,32,0.08);border-color:var(--red);color:var(--red);}
@@ -459,6 +452,7 @@
   .toolbar-addrow input{flex:1;border:1px solid #9fb0c6;border-radius:4px;padding:6px 8px;font-size:11.5px;font-family:var(--font-display);}
   .toolbar-addrow button{background:#1e4fa8;color:#fff;border:none;border-radius:4px;padding:0 10px;font-size:11.5px;cursor:pointer;}
   .amos-table select{font-family:var(--font-display);font-size:10.5px;border:1px solid #c3cedd;border-radius:3px;padding:2px 3px;background:#fff;color:#1a2b45;}
+  .mat-refs{margin-top:4px;font-size:9.5px;color:#5a6b85;line-height:1.5;}
   .amos-inactive-row td{opacity:0.55;}
 
   /* ---- Impresión a PDF (previsión de flota) ---- */
@@ -527,16 +521,24 @@ function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 let responsablesList = ['Javier R.', 'Marta S.', 'Taller Central'];
 let centrosList = ['Taller Central', 'AutoRápido Norte', 'Mecánica Sur', 'ITV San Blas'];
 
-// ---- Catálogo de materiales / recambios habituales ----
-let materialesCatalog = [
-  {id:1, parte:'Filtro de aire', marca:'Mann-Filter', ref:'C 25 114'},
-  {id:2, parte:'Filtro de aceite', marca:'Bosch', ref:'0 451 103 331'},
-  {id:3, parte:'Filtro de combustible', marca:'Mahle', ref:'KL 83'},
-  {id:4, parte:'Filtro habitáculo', marca:'Mann-Filter', ref:'CU 2939'},
-  {id:5, parte:'Aceite motor 5W30', marca:'Castrol Edge', ref:'5L'},
-  {id:6, parte:'Pastillas de freno delanteras', marca:'Brembo', ref:'P 85 020'},
-];
-let nextMaterialId = materialesCatalog.length + 1;
+// ---- Materiales: cada vehículo tiene su propio catálogo de referencias habituales ----
+// (usado también para resolver las referencias de las revisiones A/B en Previsión de flota)
+const REVISION_FILTERS = ['Filtro de aceite', 'Filtro de aire', 'Filtro de combustible', 'Filtro de habitáculo'];
+function revisionParts(code){ return ['Aceite motor 5W30', ...REVISION_FILTERS.slice(0, code==='B'?4:2)]; }
+function defaultMaterialesSet(){
+  return [
+    {id:nextMaterialId++, parte:'Aceite motor 5W30', marca:'Castrol Edge', ref:'5L'},
+    {id:nextMaterialId++, parte:'Filtro de aceite', marca:'Bosch', ref:'0 451 103 331'},
+    {id:nextMaterialId++, parte:'Filtro de aire', marca:'Mann-Filter', ref:'C 25 114'},
+    {id:nextMaterialId++, parte:'Filtro de combustible', marca:'Mahle', ref:'KL 83'},
+    {id:nextMaterialId++, parte:'Filtro de habitáculo', marca:'Mann-Filter', ref:'CU 2939'},
+  ];
+}
+function materialRefFor(v, parteName){
+  const m = (v.materiales||[]).find(x=>x.parte===parteName);
+  return m ? `${m.marca} · ${m.ref}` : 'sin referencia registrada';
+}
+let nextMaterialId = 1;
 
 let nextTaskId = 1;
 function makeTask(tipo, opts){
@@ -559,7 +561,7 @@ let vehicles = PLATES.map((plate,i)=>({
   speed:0, voltage:14.1, dtcs:[], status:'ok', marker:null, appointment:null, engineOff:false,
   estimatedKm: Math.round(randRange(15000,150000)),
   photosByTipo:{fichaTecnica:[], permisoCirculacion:[], licenciaVtc:[], otros:[]},
-  photos:[], documents:[], damagePoints:[], maintenanceLog:[],
+  photos:[], documents:[], damagePoints:[], maintenanceLog:[], materiales: defaultMaterialesSet(),
   tasks: []
 }));
 vehicles.forEach(v=>{
@@ -592,7 +594,7 @@ function createVehicle(plate, type, licencia, otros, itvDate, seguroDate){
     speed:0, voltage:14.1, dtcs:[], status:'ok', marker:null, appointment:null, engineOff:false,
     estimatedKm,
     photosByTipo:{fichaTecnica:[], permisoCirculacion:[], licenciaVtc:[], otros:[]},
-    photos:[], documents:[], damagePoints:[], maintenanceLog:[],
+    photos:[], documents:[], damagePoints:[], maintenanceLog:[], materiales: defaultMaterialesSet(),
     tasks: []
   };
   if(itvDate) v.tasks.push(makeTask('ITV caducidad', {limiteType:'fecha', fechaLimite: itvDate, fechaPreaviso: new Date(itvDate.getTime()-15*86400000)}));
@@ -601,7 +603,7 @@ function createVehicle(plate, type, licencia, otros, itvDate, seguroDate){
   return v;
 }
 
-let selectedId = vehicles[0].id;
+let selectedId = null;
 let logEntries = [];
 let regFormOpen = false;
 let regExpandedId = null;
@@ -629,11 +631,11 @@ const ADMIN_PASSWORD = '1234';
 // ---- Selector de vehículo genérico (reutilizado por Mantenimiento, Daños y Consumibles) ----
 function vehiclePickerHTML(key){
   const v = vehicles.find(x=>x.id===selectedId);
-  const open = !!pickerOpen[key];
+  const open = !!pickerOpen[key] || !v;
   return `
     <div class="dropdown">
       <div class="dropdown-header" id="picker-${key}-header">
-        <div class="dh-left">${plateBadge(v,'sm')}<span class="dh-info">${v.driver} · ${v.type}</span></div>
+        ${v ? `<div class="dh-left">${plateBadge(v,'sm')}<span class="dh-info">${v.driver} · ${v.type}</span></div>` : `<div class="dh-left"><span class="dh-info">Selecciona un vehículo...</span></div>`}
         <span class="chevron ${open?'open':''}">▾</span>
       </div>
       ${open ? `<div class="dropdown-list" id="picker-${key}-list">${vehicles.map(vehRowHTML).join('')}</div>` : ''}
@@ -680,10 +682,7 @@ function vehTypeIcon(type){
   return `<svg width="17" height="17" viewBox="0 0 24 24"><rect x="2" y="10" width="20" height="8" rx="2" fill="#9aa3ad" stroke="#6b7280" stroke-width="0.8"/><rect x="6" y="5" width="12" height="7" rx="2" fill="#9aa3ad" stroke="#6b7280" stroke-width="0.8"/><circle cx="7" cy="18" r="2" fill="#333"/><circle cx="17" cy="18" r="2" fill="#333"/></svg>`;
 }
 function plateBadge(v, size){
-  return `<span class="plate-es ${size} ${v.isBlue?'blue':''}">
-    <span class="eu-band"><span class="stars">★</span><span class="cc">E</span></span>
-    <span class="plate-body">${v.plate}</span>
-  </span>`;
+  return `<span class="plate-es ${size} ${v.isBlue?'blue':''}">${v.plate}</span>`;
 }
 function vehRowHTML(v){
   const s = statusClass(v); v.status = s;
@@ -729,7 +728,7 @@ function renderHeader(){
       <button class="logout-btn" id="logoutBtn">Salir</button>
     </div>
   `;
-  document.getElementById('logoutBtn').onclick = ()=>{ loggedIn=false; currentUser=null; loginView='menu'; screen='login'; renderScreen(); };
+  document.getElementById('logoutBtn').onclick = ()=>{ loggedIn=false; currentUser=null; loginView='menu'; selectedId=null; screen='login'; renderScreen(); };
 }
 
 // ============ PANTALLA: LOGIN (FLOTIA) ============
@@ -882,25 +881,10 @@ function attemptAdminAccess(){
 function renderHome(){
   const content = document.getElementById('content');
   content.classList.remove('no-pad');
-  const sel = vehicles.find(v=>v.id===selectedId);
   const activeAlerts = vehicles.filter(v=>v.dtcs.length>0).length;
 
   content.innerHTML = `
     <div class="home-screen">
-      <div>
-        <div class="section-label" style="margin-bottom:8px;">Vehículo seleccionado</div>
-        <div class="dropdown">
-          <div class="dropdown-header" id="homeDropdownHeader">
-            <div class="dh-left">
-              ${plateBadge(sel,'sm')}
-              <span class="dh-info">${sel.driver} · ${sel.type}</span>
-            </div>
-            <span class="chevron ${homeDropdownOpen?'open':''}">▾</span>
-          </div>
-          ${homeDropdownOpen ? `<div class="dropdown-list" id="homeDropdownList">${vehicles.map(vehRowHTML).join('')}</div>` : ''}
-        </div>
-      </div>
-
       <div class="nav-buttons">
         <div class="nav-btn" id="goVehBtn">
           <span>Vehículos<span class="nb-sub">Buscar matrícula, tareas y alta de vehículos</span></span>
@@ -910,9 +894,6 @@ function renderHome(){
         </div>
         <div class="nav-btn" id="goForecastBtn">
           <span>Previsión de flota<span class="nb-sub">Tareas, revisiones, ITV y seguros de cada coche</span></span>
-        </div>
-        <div class="nav-btn" id="goMaterialesBtn">
-          <span>Materiales<span class="nb-sub">Referencias y marcas de recambios habituales</span></span>
         </div>
         <div class="nav-btn" id="goDamageBtn">
           <span>Daños<span class="nb-sub">Diagrama 2D con golpes marcados y estado del coche</span></span>
@@ -926,18 +907,11 @@ function renderHome(){
     </div>
   `;
 
-  document.getElementById('homeDropdownHeader').onclick = ()=>{ homeDropdownOpen = !homeDropdownOpen; renderHome(); };
-  if(homeDropdownOpen){
-    content.querySelectorAll('#homeDropdownList .veh-row').forEach(row=>{
-      row.onclick = ()=>{ selectedId = parseInt(row.dataset.id); homeDropdownOpen=false; renderHome(); };
-    });
-  }
   document.getElementById('goVehBtn').onclick = ()=>{ screen='vehiculos'; vehiculosMode='lookup'; vehiculosPlateInput=''; renderScreen(); };
   document.getElementById('goMapBtn').onclick = ()=>{ screen='map'; renderScreen(); };
-  document.getElementById('goMantBtn').onclick = ()=>{ screen='mantenimiento'; pickerOpen.mant=false; scannerMenu='root'; showAssistant=false; renderScreen(); };
+  document.getElementById('goMantBtn').onclick = ()=>{ screen='mantenimiento'; selectedId=null; pickerOpen.mant=true; scannerMenu='root'; showAssistant=false; renderScreen(); };
   document.getElementById('goForecastBtn').onclick = ()=>{ screen='forecast'; renderScreen(); };
-  document.getElementById('goMaterialesBtn').onclick = ()=>{ screen='materiales'; renderScreen(); };
-  document.getElementById('goDamageBtn').onclick = ()=>{ screen='damage'; pickerOpen.damage=false; renderScreen(); };
+  document.getElementById('goDamageBtn').onclick = ()=>{ screen='damage'; selectedId=null; pickerOpen.damage=true; renderScreen(); };
 }
 
 // ============ PANTALLA: MAPA ============
@@ -966,9 +940,13 @@ function renderMapSelectedBar(){
   const bar = document.getElementById('mapSelectedBar');
   if(!bar) return;
   const v = vehicles.find(x=>x.id===selectedId);
+  if(!v){
+    bar.innerHTML = `<div style="font-size:12px;color:var(--muted);">Toca un vehículo en el mapa para ver sus opciones.</div>`;
+    return;
+  }
   bar.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;">${plateBadge(v,'sm')}<span style="font-size:12px;color:var(--muted);">${v.driver}</span></div>
-    <button class="msb-btn" id="openInScanner">Abrir en mantenimiento</button>
+    <button class="msb-btn" id="openInScanner">Abrir en escáner</button>
   `;
   document.getElementById('openInScanner').onclick = ()=>{ screen='mantenimiento'; pickerOpen.mant=false; scannerMenu='root'; showAssistant=false; renderScreen(); };
 }
@@ -1151,6 +1129,22 @@ function renderMantenimientoScreen(){
   content.classList.add('no-pad');
   const v = vehicles.find(x=>x.id===selectedId);
 
+  if(!v){
+    content.innerHTML = `
+      <div class="sub-header">
+        <button class="back-btn" id="backBtn">← Volver</button>
+        <div class="sub-title">Escáner</div>
+      </div>
+      <div id="scannerBody">
+        ${vehiclePickerHTML('mant')}
+        <div style="padding:16px;color:var(--muted);font-size:12.5px;">Selecciona un vehículo de la lista para acceder al escáner.</div>
+      </div>
+    `;
+    document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+    wireVehiclePicker('mant', ()=>{ scannerMenu='root'; showAssistant=false; });
+    return;
+  }
+
   content.innerHTML = `
     <div class="sub-header">
       <button class="back-btn" id="backBtn">← Volver</button>
@@ -1317,7 +1311,10 @@ function renderForecastScreen(){
       ? `<select class="mat-select" data-vid="${it.v.id}" data-tid="${t.id}">
            <option value="A" ${t.materiales==='A'?'selected':''}>${MATERIALES_REVISION.A}</option>
            <option value="B" ${t.materiales==='B'?'selected':''}>${MATERIALES_REVISION.B}</option>
-         </select>`
+         </select>
+         <div class="mat-refs">
+           ${revisionParts(t.materiales||'A').map(p=>`<div>${p}: ${materialRefFor(it.v, p)}</div>`).join('')}
+         </div>`
       : '—';
     return `
       <tr class="${it.v.active===false?'amos-inactive-row':''}">
@@ -1455,6 +1452,7 @@ function exportForecastToExcel(items){
     'Tipo de vehículo': it.v.type,
     'Tarea': it.tarea,
     'Materiales': it.t.tipo==='Revisión' ? MATERIALES_REVISION[it.t.materiales||'A'] : '',
+    'Referencias': it.t.tipo==='Revisión' ? revisionParts(it.t.materiales||'A').map(p=>`${p}: ${materialRefFor(it.v,p)}`).join(' | ') : '',
     'Fecha límite': it.t.fechaLimite ? formatDate(it.t.fechaLimite) : (it.t.kmLimite!=null ? formatKm(it.t.kmLimite) : ''),
     'Preaviso': it.t.fechaPreaviso ? formatDate(it.t.fechaPreaviso) : '',
     'Remanente': it.remanente.text,
@@ -1505,6 +1503,7 @@ let vehiculosPlateInput = '';
 let vehiculosMode = 'lookup';   // 'lookup' | 'tasks' | 'create'
 let vehiculosFoundId = null;
 let vehiculosNewTaskOpen = false;
+let vehiculosMaterialFormOpen = false;
 let vehiculosNewTask = {tipo:'ITV caducidad', limiteType:'fecha', fechaLimite:'', fechaPreaviso:'', kmLimite:''};
 let vehiculosInactivating = false;
 let vehiculosDraft = {plate:'', type:'Taxi', licencia:'', otros:'', itv:'', seguro:'', photosByTipo:{fichaTecnica:[],permisoCirculacion:[],licenciaVtc:[],otros:[]}};
@@ -1617,6 +1616,27 @@ function renderVehiculosScreen(){
       `).join('')}
       <button class="add-vehicle-btn" id="toggleTaskForm">${vehiculosNewTaskOpen?'✕ Cancelar':'+ Añadir tarea'}</button>
       ${taskFormHTML}
+
+      <div class="section-label" style="margin:20px 0 8px 2px;">Materiales de este vehículo (${(v.materiales||[]).length})</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Referencias y marcas habituales para el mantenimiento de esta matrícula (se usan también para las revisiones de Previsión de flota).</div>
+      ${(v.materiales||[]).map(m=>`
+        <div class="material-row">
+          <div style="flex:1;">
+            <div class="material-part">${m.parte}</div>
+            <div class="material-detail">${m.marca} · Ref: ${m.ref}</div>
+          </div>
+          <button class="material-del" data-mid="${m.id}">✕</button>
+        </div>
+      `).join('')}
+      <button class="add-vehicle-btn" id="toggleMaterialForm">${vehiculosMaterialFormOpen?'✕ Cancelar':'+ Añadir material'}</button>
+      ${vehiculosMaterialFormOpen ? `
+        <div class="reg-form">
+          <div class="form-row"><label>Pieza / recambio</label><input type="text" id="matParteInput" placeholder="Ej: Filtro de aire"></div>
+          <div class="form-row"><label>Marca</label><input type="text" id="matMarcaInput" placeholder="Ej: Mann-Filter"></div>
+          <div class="form-row"><label>Referencia</label><input type="text" id="matRefInput" placeholder="Ej: C 25 114"></div>
+          <button class="save-btn" id="saveMaterialBtn">Guardar</button>
+        </div>
+      ` : ''}
     `;
   }
 
@@ -1690,6 +1710,22 @@ function renderVehiculosScreen(){
     content.querySelectorAll('.task-del').forEach(btn=>{
       btn.onclick = ()=>{ v.tasks = v.tasks.filter(t=>t.id!==parseInt(btn.dataset.tid)); renderScreen(); };
     });
+    document.getElementById('toggleMaterialForm').onclick = ()=>{ vehiculosMaterialFormOpen = !vehiculosMaterialFormOpen; renderScreen(); };
+    if(vehiculosMaterialFormOpen){
+      document.getElementById('saveMaterialBtn').onclick = ()=>{
+        const parte = document.getElementById('matParteInput').value.trim();
+        const marca = document.getElementById('matMarcaInput').value.trim();
+        const ref = document.getElementById('matRefInput').value.trim();
+        if(!parte) return;
+        v.materiales = v.materiales || [];
+        v.materiales.push({id:nextMaterialId++, parte, marca:marca||'—', ref:ref||'—'});
+        vehiculosMaterialFormOpen = false;
+        renderScreen();
+      };
+    }
+    content.querySelectorAll('.material-del').forEach(btn=>{
+      btn.onclick = ()=>{ v.materiales = (v.materiales||[]).filter(m=>m.id!==parseInt(btn.dataset.mid)); renderScreen(); };
+    });
     if(vehiculosNewTaskOpen){
       document.getElementById('taskTipoSelect').onchange = (e)=>{ vehiculosNewTask.tipo = e.target.value; renderScreen(); };
       content.querySelectorAll('.radio-opt[data-limite]').forEach(opt=>{
@@ -1737,6 +1773,23 @@ function renderDamageScreen(){
   const content = document.getElementById('content');
   content.classList.remove('no-pad');
   const v = vehicles.find(x=>x.id===selectedId);
+
+  if(!v){
+    content.innerHTML = `
+      <div class="sub-header">
+        <button class="back-btn" id="backBtn">← Volver</button>
+        <div class="sub-title">Daños</div>
+      </div>
+      <div style="padding:16px;">
+        ${vehiclePickerHTML('damage')}
+        <div style="color:var(--muted);font-size:12.5px;margin-top:10px;">Selecciona un vehículo de la lista para ver su diagrama de daños.</div>
+      </div>
+    `;
+    document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+    wireVehiclePicker('damage');
+    return;
+  }
+
   const score = Math.max(0, 100 - v.damagePoints.length*12);
   const scoreColor = score>=70 ? 'var(--green)' : (score>=40 ? 'var(--orange)' : 'var(--red)');
   const scoreText = score>=70 ? 'buen estado' : (score>=40 ? 'estado regular' : 'mal estado');
@@ -1777,59 +1830,6 @@ function renderDamageScreen(){
   });
 }
 
-// ============ PANTALLA: MATERIALES (catálogo de recambios habituales) ============
-let materialFormOpen = false;
-function renderMaterialesScreen(){
-  const content = document.getElementById('content');
-  content.classList.remove('no-pad');
-
-  const formHTML = !materialFormOpen ? '' : `
-    <div class="reg-form">
-      <div class="form-row"><label>Pieza / recambio</label><input type="text" id="matParteInput" placeholder="Ej: Filtro de aire"></div>
-      <div class="form-row"><label>Marca</label><input type="text" id="matMarcaInput" placeholder="Ej: Mann-Filter"></div>
-      <div class="form-row"><label>Referencia</label><input type="text" id="matRefInput" placeholder="Ej: C 25 114"></div>
-      <button class="save-btn" id="saveMaterialBtn">Guardar</button>
-    </div>
-  `;
-
-  content.innerHTML = `
-    <div class="sub-header">
-      <button class="back-btn" id="backBtn">← Volver</button>
-      <div class="sub-title">Materiales</div>
-    </div>
-    <div style="padding:16px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Referencias y marcas de recambios habituales, para agilizar el mantenimiento de la flota.</div>
-      <button class="add-vehicle-btn" id="toggleMaterialForm">${materialFormOpen?'✕ Cancelar':'+ Añadir material'}</button>
-      ${formHTML}
-      ${materialesCatalog.map(m=>`
-        <div class="material-row">
-          <div style="flex:1;">
-            <div class="material-part">${m.parte}</div>
-            <div class="material-detail">${m.marca} · Ref: ${m.ref}</div>
-          </div>
-          <button class="task-del" data-mid="${m.id}">✕</button>
-        </div>
-      `).join('')}
-    </div>
-  `;
-
-  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
-  document.getElementById('toggleMaterialForm').onclick = ()=>{ materialFormOpen = !materialFormOpen; renderScreen(); };
-  if(materialFormOpen){
-    document.getElementById('saveMaterialBtn').onclick = ()=>{
-      const parte = document.getElementById('matParteInput').value.trim();
-      const marca = document.getElementById('matMarcaInput').value.trim();
-      const ref = document.getElementById('matRefInput').value.trim();
-      if(!parte) return;
-      materialesCatalog.push({id:nextMaterialId++, parte, marca:marca||'—', ref:ref||'—'});
-      materialFormOpen = false;
-      renderScreen();
-    };
-  }
-  content.querySelectorAll('.material-row .task-del').forEach(btn=>{
-    btn.onclick = ()=>{ materialesCatalog = materialesCatalog.filter(m=>m.id!==parseInt(btn.dataset.mid)); renderScreen(); };
-  });
-}
 
 // ============ Router ============
 function renderScreen(){
@@ -1843,7 +1843,6 @@ function renderScreen(){
   else if(screen==='forecast') renderForecastScreen();
   else if(screen==='vehiculos') renderVehiculosScreen();
   else if(screen==='damage') renderDamageScreen();
-  else if(screen==='materiales') renderMaterialesScreen();
   refreshAlertPill();
 }
 

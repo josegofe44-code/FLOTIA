@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FLOTIA — App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=VT323&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#EEF1F5;
+    --panel:#FFFFFF;
+    --panel-alt:#F4F6F9;
+    --border:#D7DCE3;
+    --text:#22303F;
+    --muted:#69758A;
+    --orange:#0A6ED1;
+    --red:#B00020;
+    --green:#0E7D3C;
+    --taxi-accent:#E9730C;
+    --lcd-bg:#9FB08C;
+    --lcd-bg-dark:#8CA079;
+    --lcd-text:#243318;
+    --font-display:'Inter',sans-serif;
+    --font-lcd:'VT323',monospace;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:#DCE1E8;
+    color:var(--text);
+    font-family:var(--font-display);
+    display:flex;
+    justify-content:center;
+  }
+  #app{
+    width:100%;
+    max-width:440px;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+    box-shadow:0 0 1px rgba(0,0,0,0.15);
+  }
+  header{
+    flex:0 0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:13px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;letter-spacing:0.3px;color:var(--text);}
+  .brand .dot{width:7px;height:7px;border-radius:1px;background:var(--taxi-accent);}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .user-chip{font-size:11px;color:var(--muted);background:var(--panel-alt);border:1px solid var(--border);padding:5px 10px;border-radius:4px;white-space:nowrap;}
+  .logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:5px 10px;font-size:11px;font-family:var(--font-display);cursor:pointer;}
+  .alert-pill{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(176,0,32,0.08);border:1px solid rgba(176,0,32,0.3);
+    color:var(--red);padding:5px 11px;border-radius:4px;font-size:11.5px;font-weight:600;
+  }
+
+  #content{flex:1 1 auto;overflow-y:auto;padding:16px;}
+  #content.no-pad{padding:0;display:flex;flex-direction:column;}
+
+  #log{
+    flex:0 0 118px;
+    border-top:1px solid var(--border);
+    padding:8px 16px;
+    overflow-y:auto;
+    font-family:var(--font-mono);
+    font-size:11px;
+    background:var(--panel-alt);
+  }
+  #log h2{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:2px 0 6px 0;font-weight:600;}
+  .log-line{padding:2px 0;color:var(--muted);border-bottom:1px dashed rgba(0,0,0,0.07);}
+  .log-line .t{color:#9aa3b0;margin-right:8px;}
+  .log-line.fault .t + span{color:var(--red);}
+  .log-line.clear .t + span{color:var(--green);}
+  .log-line.share .t + span{color:var(--orange);}
+
+  /* ---- Matrícula ---- */
+  .plate-es{display:inline-flex;align-items:stretch;border-radius:3px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.5);vertical-align:middle;}
+  .plate-es .eu-band{width:13px;background:#003399;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5px;line-height:1;padding:1px 0;}
+  .plate-es .eu-band .stars{font-size:5px;}
+  .plate-es .eu-band .cc{font-size:6px;font-weight:700;margin-top:1px;}
+  .plate-es .plate-body{background:#fff;color:#111;display:flex;align-items:center;padding:0 6px;font-weight:700;letter-spacing:1.2px;font-family:Arial,'Helvetica Neue',sans-serif;}
+  .plate-es.blue .plate-body{background:#0B3C8C;color:#fff;}
+  .plate-es.sm{height:20px;}
+  .plate-es.sm .plate-body{font-size:12px;}
+  .plate-es.md{height:28px;}
+  .plate-es.md .eu-band{width:16px;}
+  .plate-es.md .plate-body{font-size:15px;}
+
+  /* ---- Pantalla inicio ---- */
+  .home-screen{display:flex;flex-direction:column;gap:14px;}
+  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);font-weight:600;}
+  .dropdown{background:var(--panel);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .dropdown-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;cursor:pointer;
+  }
+  .dropdown-header .dh-left{display:flex;align-items:center;gap:10px;}
+  .dropdown-header .dh-info{font-size:12.5px;color:var(--muted);}
+  .chevron{font-size:11px;color:var(--muted);transition:transform 0.15s ease;}
+  .chevron.open{transform:rotate(180deg);}
+  .dropdown-list{border-top:1px solid var(--border);max-height:280px;overflow-y:auto;background:var(--panel-alt);}
+  .search-input{
+    width:100%;background:#fff;border:1px solid var(--border);border-radius:4px;
+    color:var(--text);padding:9px 11px;font-family:var(--font-display);font-size:13px;margin-bottom:8px;
+  }
+  .veh-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);
+  }
+  .veh-row:hover{background:#EAEEF3;}
+  .veh-row .vr-left{display:flex;align-items:center;gap:10px;}
+  .veh-row .vr-meta{font-size:11.5px;color:var(--muted);}
+  .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .status-ok{background:var(--green);}
+  .status-warn{background:var(--taxi-accent);}
+  .status-fault{background:var(--red);}
+  .appt-flag{font-size:9px;color:var(--orange);border:1px solid var(--orange);padding:0 5px;border-radius:3px;margin-left:6px;}
+
+  /* ---- Previsión de flota — ventana estilo tabla AMOS ---- */
+  .amos-window{background:#eef2f8;border-radius:6px;overflow:hidden;border:1px solid #b9c6d6;margin:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+  .amos-titlebar{background:#1e4fa8;color:#fff;padding:10px 14px;font-size:12.5px;font-weight:700;letter-spacing:0.3px;display:flex;align-items:center;gap:8px;}
+  .amos-toolbar{padding:9px 10px;background:#dbe4f0;border-bottom:1px solid #b9c6d6;display:flex;gap:8px;flex-wrap:wrap;}
+  .amos-toolbar input, .amos-toolbar select{border:1px solid #9fb0c6;border-radius:5px;padding:6px 8px;font-size:12px;background:#fff;color:#1a2b45;font-family:var(--font-display);}
+  .amos-toolbar input{flex:1;min-width:120px;}
+  .amos-table-wrap{overflow-x:auto;background:#fff;max-height:380px;overflow-y:auto;}
+  table.amos-table{width:100%;border-collapse:collapse;font-size:11px;color:#1a2b45;min-width:540px;}
+  .amos-table th{background:#c9d6e8;text-align:left;padding:7px 8px;font-size:9.5px;text-transform:uppercase;letter-spacing:0.3px;cursor:pointer;white-space:nowrap;border-bottom:1px solid #9fb0c6;position:sticky;top:0;user-select:none;}
+  .amos-table th .arrow{font-size:9px;opacity:0.7;margin-left:3px;}
+  .amos-table td{padding:6px 8px;border-bottom:1px solid #e2e8f0;white-space:nowrap;vertical-align:middle;}
+  .amos-table tr:nth-child(even) td{background:#f4f7fb;}
+  .amos-chip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:9px;}
+  .amos-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#dbe4f0;border-top:1px solid #b9c6d6;gap:8px;}
+  .amos-count{font-size:10.5px;color:#41547a;}
+  .amos-export-btn{background:#1e7d3c;color:#fff;border:none;border-radius:6px;padding:8px 13px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font-display);}
+  .amos-plate-cell{transform:scale(0.82);transform-origin:left center;}
+  .plain-plate-cell{display:flex;align-items:center;gap:7px;}
+  .plain-plate-text{font-family:var(--font-mono);font-weight:700;letter-spacing:0.4px;color:#1a2b45;font-size:11.5px;}
+
+  /* ---- Módulo: Alta de vehículos ---- */
+  .add-vehicle-btn{width:100%;background:var(--orange);color:#fff;border:none;border-radius:4px;padding:11px;font-family:var(--font-display);font-weight:600;font-size:13.5px;cursor:pointer;margin-bottom:12px;}
+  .reg-form{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;}
+  .form-row{margin-bottom:10px;}
+  .form-row label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;}
+  .form-row input, .form-row select{width:100%;background:#fff;border:1px solid var(--border);border-radius:4px;color:var(--text);padding:9px 10px;font-family:var(--font-display);font-size:13.5px;}
+  .save-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:4px;padding:11px;font-weight:600;font-family:var(--font-display);cursor:pointer;font-size:13.5px;}
+  .reg-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden;}
+  .reg-card-top{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;}
+  .reg-card-sub{display:flex;align-items:center;gap:8px;padding:0 14px 12px 14px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+  .date-input{background:#fff;border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-family:var(--font-mono);font-size:11.5px;}
+  .reg-card-body{border-top:1px solid var(--border);padding:14px;}
+  .reg-section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600;margin-bottom:8px;}
+  .photo-strip{display:flex;gap:8px;flex-wrap:wrap;}
+  .photo-thumb{width:56px;height:56px;object-fit:cover;border-radius:4px;border:1px solid var(--border);}
+  .photo-add{width:56px;height:56px;border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);cursor:pointer;}
+  .doc-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+  .doc-row{background:var(--panel-alt);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:12px;}
+  .doc-row.muted{color:var(--muted);}
+  .doc-add-btn{display:inline-block;background:var(--panel-alt);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:9px 12px;font-size:12.5px;cursor:pointer;font-family:var(--font-display);}
+
+  /* ---- Módulo: Daños ---- */
+  .damage-score-bar{height:10px;background:var(--panel-alt);border-radius:6px;overflow:hidden;margin:14px 0 6px 0;}
+  .damage-score-fill{height:100%;transition:width 0.3s ease;}
+  .damage-score-label{font-size:13px;font-weight:700;margin-bottom:12px;}
+  .damage-hint{font-size:11.5px;color:var(--muted);margin-top:10px;text-align:center;}
+  .damage-list{margin-top:12px;font-size:12px;color:var(--muted);}
+
+  /* ---- Módulo: Control de averías ---- */
+  .maint-history{margin-top:16px;}
+  .maint-row{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+  .maint-icon{font-size:20px;}
+  .maint-row .mr-tipo{font-size:13px;font-weight:700;}
+  .maint-row .mr-detail{font-size:11.5px;color:var(--muted);}
+
+  .nav-buttons{display:flex;flex-direction:column;gap:10px;}
+
+  /* ---- Previsión de flota (tipo AMOS Maintenance Forecast) ---- */
+  .forecast-list{display:flex;flex-direction:column;}
+  .forecast-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);}
+  .fr-left{display:flex;align-items:center;gap:10px;min-width:0;}
+  .fr-meta{min-width:0;}
+  .fr-meta .fr-type{font-size:12.5px;font-weight:700;}
+  .fr-meta .fr-sub{font-size:10.5px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fr-right{text-align:right;flex-shrink:0;padding-left:8px;}
+  .fr-date{font-family:var(--font-mono);font-size:11.5px;color:var(--text);}
+  .fr-chip{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:9px;margin-top:3px;display:inline-block;}
+  .nav-btn{
+    display:flex;align-items:center;gap:14px;
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;
+    padding:15px 16px;cursor:pointer;color:var(--text);
+    font-family:var(--font-display);font-size:14.5px;font-weight:600;
+  }
+  .nav-btn .icon{font-size:20px;}
+  .nav-btn .nb-sub{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px;}
+  .nav-btn:active{background:var(--panel-alt);}
+  .home-summary{font-size:12px;color:var(--muted);text-align:center;padding-top:4px;}
+
+  /* ---- Subpantallas (mapa / scanner) ---- */
+  .sub-header{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 16px;border-bottom:1px solid var(--border);flex:0 0 auto;background:var(--panel);
+  }
+  .back-btn{
+    background:var(--panel-alt);border:1px solid var(--border);color:var(--text);
+    border-radius:4px;padding:7px 12px;font-family:var(--font-display);font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .sub-title{font-size:14.5px;font-weight:700;}
+
+  /* Mapa */
+  #mapScreenBody{flex:1 1 auto;position:relative;}
+  #leafletMap{position:absolute;inset:0;filter:grayscale(0.35) contrast(1.02);}
+  .marker-label{font-family:var(--font-mono) !important;font-size:10px !important;color:#fff !important;background:rgba(34,48,63,0.9) !important;border:1px solid var(--border) !important;padding:1px 5px !important;box-shadow:none !important;}
+  .leaflet-tooltip:before{display:none !important;}
+  .leaflet-control-attribution{background:rgba(255,255,255,0.75) !important;color:var(--muted) !important;font-size:9px !important;}
+  .map-selected-bar{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px;border-top:1px solid var(--border);background:var(--panel);
+  }
+  .map-selected-bar .msb-btn{
+    background:var(--orange);color:#fff;border:none;border-radius:4px;
+    padding:8px 12px;font-family:var(--font-display);font-weight:600;font-size:12.5px;cursor:pointer;
+  }
+
+  /* Scanner */
+  #scannerBody{padding:16px;flex:1 1 auto;overflow-y:auto;}
+  .scanner{background:linear-gradient(180deg,#3d3e42,#232427);border-radius:8px;padding:13px;box-shadow:inset 0 0 0 1px #000, 0 3px 10px rgba(0,0,0,0.4);border:1px solid #050505;margin-top:4px;}
+  .scanner-top{display:flex;align-items:center;justify-content:space-between;padding:0 4px 9px 4px;}
+  .scanner-top .st-left{display:flex;align-items:center;gap:9px;}
+  .scanner-brand{font-size:10px;letter-spacing:1.5px;color:#9a9ca1;text-transform:uppercase;font-weight:700;}
+  .scanner-mil-sm{width:24px;height:16px;display:flex;align-items:center;justify-content:center;}
+  .scanner-led{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:ledpulse 1.6s infinite;}
+  @keyframes ledpulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .lcd-tabs{display:flex;gap:6px;margin:0 4px 8px 4px;}
+  .lcd-tab{
+    flex:1;text-align:center;padding:8px 4px;
+    font-family:var(--font-display);font-size:10.5px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;
+    color:#fff;
+    background:radial-gradient(circle at 30% 25%, #38393c, #0c0c0d 75%);
+    border:1px solid #000;border-radius:8px;cursor:pointer;
+    box-shadow:0 3px 0 #000, 0 4px 6px rgba(0,0,0,0.55);
+    text-shadow:0 1px 1px rgba(0,0,0,0.6);
+  }
+  .lcd-tab:active{transform:translateY(3px);box-shadow:inset 0 2px 3px rgba(0,0,0,0.6);}
+  .lcd-tab.active{background:radial-gradient(circle at 30% 25%, #4a4b4f, #151516 75%);box-shadow:0 3px 0 #000, 0 0 10px rgba(255,255,255,0.15), inset 0 0 0 1px rgba(255,255,255,0.12);}
+  .lcd-page-indicator{position:absolute;top:8px;right:10px;font-size:13px;opacity:0.6;z-index:1;}
+  .lcd-screen{background:linear-gradient(180deg,var(--lcd-bg),var(--lcd-bg-dark));border-radius:4px;padding:16px 16px;box-shadow:inset 0 2px 6px rgba(0,0,0,0.35), inset 0 0 0 2px rgba(0,0,0,0.25);font-family:var(--font-lcd);color:var(--lcd-text);position:relative;overflow:hidden;min-height:230px;}
+  .lcd-screen::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 3px);pointer-events:none;}
+  .lcd-live-grid{display:flex;flex-direction:column;gap:2px;position:relative;z-index:1;}
+  .lcd-live-row{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px dashed rgba(36,51,24,0.22);padding:3px 0;}
+  .lcd-live-row .llr-label{font-size:15px;letter-spacing:0.5px;opacity:0.85;}
+  .lcd-live-row .llr-value{font-size:22px;letter-spacing:1px;font-weight:400;}
+  .lcd-live-row .llr-value.warn{position:relative;}
+  .lcd-line{font-size:19px;letter-spacing:1px;line-height:1.35;position:relative;z-index:1;}
+  .lcd-line.small{font-size:14px;opacity:0.85;}
+  .lcd-code{font-weight:700;}
+  .lcd-cursor{display:inline-block;width:8px;height:15px;background:var(--lcd-text);opacity:0.7;animation:cursorblink 1s infinite;vertical-align:middle;margin-left:2px;}
+  @keyframes cursorblink{0%,49%{opacity:0.75;}50%,100%{opacity:0;}}
+  .scanner-keys{display:flex;gap:6px;margin-top:10px;}
+  .key{
+    flex:1;
+    background:radial-gradient(circle at 30% 25%, #333437, #0a0a0b 75%);
+    border:1px solid #000;border-radius:8px;
+    color:#fff;
+    font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+    padding:10px 4px;text-align:center;cursor:pointer;
+    box-shadow:0 3px 0 #000, 0 4px 6px rgba(0,0,0,0.55);
+    text-shadow:0 1px 1px rgba(0,0,0,0.6);
+  }
+  .key:active{transform:translateY(3px);box-shadow:inset 0 2px 3px rgba(0,0,0,0.6);}
+  .key:disabled{opacity:0.3;cursor:not-allowed;}
+  .key.active{background:radial-gradient(circle at 30% 25%, #4a4b4f, #151516 75%);box-shadow:0 3px 0 #000, 0 0 8px rgba(255,255,255,0.15), inset 0 0 0 1px rgba(255,255,255,0.12);}
+  .key-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+  /* ---- Asistente IA (Claude) ---- */
+  .ai-btn{
+    width:100%;margin-top:10px;
+    background:radial-gradient(circle at 30% 25%, #333437, #0a0a0b 75%);
+    border:1px solid #000;border-radius:8px;
+    color:#fff;
+    font-family:var(--font-display);font-weight:700;font-size:11.5px;letter-spacing:0.6px;text-transform:uppercase;
+    padding:12px 4px;cursor:pointer;
+    box-shadow:0 3px 0 #000, 0 4px 6px rgba(0,0,0,0.55);
+    text-shadow:0 1px 1px rgba(0,0,0,0.6);
+  }
+  .ai-btn:active{transform:translateY(3px);box-shadow:inset 0 2px 3px rgba(0,0,0,0.6);}
+  .ai-panel{
+    margin-top:12px;background:#1a1c22;border:1px solid #35384a;border-radius:12px;padding:14px;
+  }
+  .ai-panel-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;font-weight:700;color:#a3a8ff;text-transform:uppercase;letter-spacing:0.6px;}
+  .ai-severity{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:9px;margin-bottom:8px;}
+  .ai-code-block{margin-bottom:12px;}
+  .ai-code-block:last-child{margin-bottom:0;}
+  .ai-code-title{font-family:var(--font-mono);font-weight:700;font-size:12.5px;color:var(--text);margin-bottom:4px;}
+  .ai-advice-text{font-size:12.5px;line-height:1.55;color:#d3d5e0;}
+  .ai-disclaimer{font-size:10px;color:var(--muted);margin-top:10px;font-style:italic;}
+
+  /* ---- Login GESTFLOTAS ---- */
+  .login-screen{padding:32px 20px 24px;display:flex;flex-direction:column;min-height:100%;background:var(--panel);}
+  .login-logo{text-align:center;margin-top:10px;margin-bottom:6px;}
+  .login-logo-badge{
+    width:48px;height:48px;margin:0 auto 14px;border-radius:4px;
+    background:var(--text);color:#fff;font-size:20px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .login-title{font-family:var(--font-display);font-size:21px;font-weight:700;letter-spacing:0.3px;color:var(--text);}
+  .login-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+  .login-users{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+  .login-user-card{
+    display:flex;align-items:center;gap:12px;
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;
+    padding:12px 14px;cursor:pointer;
+  }
+  .login-user-card.selected{border-color:var(--orange);background:rgba(10,110,209,0.06);}
+  .lu-icon{font-size:18px;}
+  .lu-label{font-size:13.5px;font-weight:600;}
+  .lu-username{font-size:10.5px;color:var(--muted);font-family:var(--font-mono);}
+  .login-form{display:flex;flex-direction:column;gap:9px;margin-top:auto;}
+  .login-form input{
+    background:#fff;border:1px solid var(--border);border-radius:4px;
+    color:var(--text);padding:11px 12px;font-family:var(--font-display);font-size:14px;
+  }
+  .login-error{color:var(--red);font-size:12px;background:rgba(176,0,32,0.06);border:1px solid rgba(176,0,32,0.3);border-radius:4px;padding:8px 10px;}
+  .login-btn{
+    background:var(--orange);
+    color:#fff;border:none;border-radius:4px;padding:13px;
+    font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:0.2px;cursor:pointer;
+  }
+  .login-btn:active{opacity:0.85;}
+  .login-hint{text-align:center;font-size:10.5px;color:var(--muted);margin-top:12px;}
+
+  /* ---- Cuadro de instrumentos BMW (Mantenimiento) ---- */
+  .bmw-cluster{
+    margin:14px;padding:16px 14px;
+    background:linear-gradient(180deg,#1c1d1f,#08090a);
+    border:1px solid #050505;border-radius:14px;
+    display:flex;align-items:center;gap:14px;
+    box-shadow:inset 0 0 0 1px #3a3a3a, 0 4px 14px rgba(0,0,0,0.5);
+  }
+  .bmw-gauge-block{text-align:center;flex:0 0 auto;}
+  .bmw-gauge-label{font-family:var(--font-display);font-size:9.5px;letter-spacing:1px;color:#c9c6ba;margin-top:-10px;font-weight:700;}
+  .bmw-digital-panel{
+    flex:1 1 auto;min-width:0;
+    background:#000;border:1px solid #2a2a2a;border-radius:8px;
+    padding:10px 12px;
+  }
+  .bmw-digital-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1c1c1c;}
+  .bmw-digital-row:last-child{border-bottom:none;}
+  .bmw-digital-label{font-family:var(--font-display);font-size:9.5px;letter-spacing:0.6px;color:#8a8a80;text-transform:uppercase;}
+  .bmw-digital-value{font-family:var(--font-mono);font-size:19px;font-weight:700;color:#FF7A1A;text-shadow:0 0 8px rgba(255,122,26,0.45);letter-spacing:1px;}
+  .bmw-digital-unit{font-size:10px;color:#8a8a80;margin-left:4px;text-shadow:none;font-weight:400;}
+  .bmw-digital-warning{display:flex;align-items:center;gap:7px;font-size:10.5px;}
+  .bmw-warning-light-sm{width:26px;height:26px;border-radius:6px;background:#000;border:1px solid #333;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+  /* ---- Cuadro de instrumentos propio (Mantenimiento) ---- */
+  .car-cluster{
+    margin:14px;padding:16px 12px;
+    background:linear-gradient(180deg,#1c1d1f,#08090a);
+    border:1px solid #050505;border-radius:14px;
+    box-shadow:inset 0 0 0 1px #3a3a3a, 0 4px 14px rgba(0,0,0,0.5);
+  }
+  .cc-gauges-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+  .cc-center-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 74px;}
+  .cc-mil{width:44px;height:44px;border-radius:9px;background:#000;border:1px solid #333;display:flex;align-items:center;justify-content:center;}
+  .cc-mil.on{border-color:#FF7A1A;}
+  .cc-mil-text{font-family:var(--font-display);font-size:8.5px;font-weight:800;letter-spacing:0.5px;}
+  .cc-digital-strip{
+    display:flex;justify-content:space-between;gap:6px;
+    margin:14px 4px 0;padding:10px 10px;
+    background:#000;border:1px solid #2a2a2a;border-radius:8px;
+  }
+  .cc-digital-item{flex:1;text-align:center;display:flex;flex-direction:column;gap:2px;}
+  .cc-di-label{font-family:var(--font-display);font-size:8.5px;color:#8a8a80;text-transform:uppercase;letter-spacing:0.4px;}
+  .cc-di-value{font-family:var(--font-mono);font-size:14px;font-weight:700;color:#FF7A1A;text-shadow:0 0 6px rgba(255,122,26,0.4);}
+  .cc-di-value small{font-size:8.5px;color:#8a8a80;font-weight:400;text-shadow:none;}
+  .engine-off-btn{
+    width:100%;margin-top:14px;
+    background:radial-gradient(circle at 30% 25%, #E5342E, #7a0a06 75%);
+    border:1px solid #000;border-radius:10px;
+    color:#fff;font-family:var(--font-display);font-weight:800;font-size:13.5px;letter-spacing:1px;
+    padding:13px;cursor:pointer;text-transform:uppercase;
+    box-shadow:0 3px 0 #4a0000, 0 4px 10px rgba(0,0,0,0.5);
+    text-shadow:0 1px 2px rgba(0,0,0,0.5);
+  }
+  .engine-off-btn:active{transform:translateY(3px);box-shadow:none;}
+  .engine-off-btn.is-off{
+    background:radial-gradient(circle at 30% 25%, #3CCB6E, #0f6b34 75%);
+    box-shadow:0 3px 0 #0a4022, 0 4px 10px rgba(0,0,0,0.5);
+  }
+  .cc-off-note{margin-top:8px;text-align:center;font-size:11px;color:#FF6B6B;font-weight:600;}
+
+  .toast{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-left:3px solid var(--orange);padding:13px 15px;border-radius:6px;max-width:380px;width:88%;font-size:12.5px;font-family:var(--font-display);box-shadow:0 6px 18px rgba(0,0,0,0.25);z-index:2000;}
+  .toast strong{display:block;margin-bottom:4px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,28,38,0.55);display:flex;align-items:center;justify-content:center;z-index:3000;padding:20px;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:22px;width:100%;max-width:340px;box-shadow:0 12px 32px rgba(0,0,0,0.2);}
+  .modal h3{margin:0 0 10px 0;font-size:16px;color:var(--text);}
+  .modal p{color:var(--muted);font-size:12.5px;line-height:1.5;margin-bottom:16px;}
+  .modal-buttons{display:flex;gap:10px;}
+  .modal-buttons button{flex:1;padding:10px;border-radius:4px;border:1px solid var(--border);font-weight:600;cursor:pointer;font-family:var(--font-display);}
+  .btn-cancel{background:var(--panel-alt);color:var(--text);}
+  .btn-confirm{background:var(--red);color:#fff;border-color:var(--red);}
+
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+  /* ---- Login FLOTIA: menú de 3 opciones ---- */
+  .login-menu{display:flex;flex-direction:column;gap:10px;margin-top:22px;}
+  .login-menu-btn{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;
+    padding:15px 16px;text-align:left;cursor:pointer;color:var(--text);
+    font-family:var(--font-display);font-size:14.5px;font-weight:600;
+  }
+  .login-menu-btn .lmb-sub{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px;}
+  .login-menu-btn:active{background:var(--panel-alt);}
+  .login-back{background:transparent;border:none;color:var(--orange);font-family:var(--font-display);font-size:12.5px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;text-align:left;}
+  .profile-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;}
+  .profile-opt{
+    display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:6px;
+    padding:11px 13px;cursor:pointer;font-size:13px;font-weight:600;
+  }
+  .profile-opt.selected{border-color:var(--orange);background:rgba(10,110,209,0.06);}
+  .admin-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;}
+  .admin-table th{text-align:left;padding:7px 8px;font-size:10px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+  .admin-table td{padding:8px 8px;border-bottom:1px solid var(--border);}
+  .admin-del-btn{background:var(--red);color:#fff;border:none;border-radius:4px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:var(--font-display);}
+
+  /* ---- Pantalla: Vehículos ---- */
+  .plate-lookup{display:flex;gap:8px;}
+  .plate-lookup input{flex:1;background:#fff;border:1px solid var(--border);border-radius:4px;color:var(--text);padding:10px 12px;font-family:var(--font-mono);font-size:14px;text-transform:uppercase;}
+  .plate-lookup button{background:var(--orange);color:#fff;border:none;border-radius:4px;padding:0 16px;font-family:var(--font-display);font-weight:600;font-size:13px;cursor:pointer;}
+  .task-row{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:11px 13px;margin-bottom:8px;}
+  .task-row-top{display:flex;align-items:center;justify-content:space-between;}
+  .task-tipo{font-size:13px;font-weight:700;}
+  .task-meta{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .task-del{background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer;line-height:1;}
+  .veh-status-banner{display:flex;align-items:center;justify-content:space-between;background:var(--panel-alt);border:1px solid var(--border);border-radius:6px;padding:10px 13px;margin-bottom:12px;}
+  .toggle-inactive-btn{background:var(--panel-alt);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:7px 11px;font-size:12px;font-family:var(--font-display);cursor:pointer;font-weight:600;}
+  .toggle-inactive-btn.is-inactive{background:rgba(176,0,32,0.08);border-color:var(--red);color:var(--red);}
+  .radio-toggle{display:flex;gap:8px;margin-bottom:2px;}
+  .radio-opt{flex:1;text-align:center;padding:8px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);}
+  .radio-opt.selected{border-color:var(--orange);color:var(--orange);background:rgba(10,110,209,0.06);}
+
+  /* ---- Pantalla: Materiales ---- */
+  .material-row{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 13px;margin-bottom:8px;}
+  .material-part{font-size:13px;font-weight:700;flex:1;}
+  .material-detail{font-size:11.5px;color:var(--muted);}
+
+  /* ---- Toolbar extra en Previsión (responsables / centros) ---- */
+  .toolbar-addrow{display:flex;gap:6px;margin-top:6px;}
+  .toolbar-addrow input{flex:1;border:1px solid #9fb0c6;border-radius:4px;padding:6px 8px;font-size:11.5px;font-family:var(--font-display);}
+  .toolbar-addrow button{background:#1e4fa8;color:#fff;border:none;border-radius:4px;padding:0 10px;font-size:11.5px;cursor:pointer;}
+  .amos-table select{font-family:var(--font-display);font-size:10.5px;border:1px solid #c3cedd;border-radius:3px;padding:2px 3px;background:#fff;color:#1a2b45;}
+  .amos-inactive-row td{opacity:0.55;}
+
+  /* ---- Impresión a PDF (previsión de flota) ---- */
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{position:absolute;top:0;left:0;width:100%;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="appHeader">
+    <div class="brand"><span class="dot"></span>GESTFLOTAS</div>
+  </header>
+
+  <div id="content"></div>
+
+  <div id="log">
+    <h2>Registro de eventos en vivo</h2>
+    <div id="logList"></div>
+  </div>
+</div>
+
+<script>
+const DTC_LIBRARY = [
+  {code:'P0301', desc:'Fallo de encendido cilindro 1', severity:'alta',
+   advice:'Fallo de encendido en el cilindro 1. Puedes seguir circulando con precaución, evitando acelerones fuertes. Revisa la bujía y la bobina de ese cilindro. Borra el código y sigue conduciendo con normalidad — si vuelve a aparecer en menos de 50 km, ve al taller: mantenerlo así de forma prolongada puede dañar el catalizador.'},
+  {code:'P0420', desc:'Rendimiento catalizador bajo', severity:'media',
+   advice:'El catalizador rinde por debajo de lo esperado. No es urgente, el coche puede seguir circulando con normalidad. Borra el código. Si reaparece en los próximos días, probablemente el catalizador esté degradado — no hay riesgo inmediato, pero conviene revisarlo antes de la próxima ITV.'},
+  {code:'P0171', desc:'Sistema demasiado pobre (banco 1)', severity:'media',
+   advice:'Revisa primero que la tapa del depósito de combustible esté bien cerrada — es la causa más común. Borra el código. Si vuelve a salir, puede ser un sensor MAF sucio o una pequeña fuga de vacío; no es peligroso a corto plazo, pero llévalo al taller en los próximos días.'},
+  {code:'P0128', desc:'Termostato — temperatura refrigerante baja', severity:'baja',
+   advice:'No es un fallo grave: el motor tarda más de lo normal en alcanzar su temperatura. Borra el código y sigue conduciendo con normalidad. Si vuelve a aparecer de forma repetida, cambia el termostato en tu próxima revisión — no es urgente ni afecta a la seguridad.'},
+  {code:'P0442', desc:'Fuga pequeña detectada (EVAP)', severity:'baja',
+   advice:'Revisa primero que el tapón de combustible esté bien cerrado y borra el código. Si reaparece, probablemente haya una fuga pequeña en el sistema de vapores de combustible — no afecta a la conducción, pero sí puede hacer que falles la ITV si no se soluciona antes.'},
+];
+const NAMES = ['Javier R.','Marta S.','Ahmed K.','Lucía G.','Pedro M.','Sara T.','Diego F.','Elena V.'];
+const PLATES = ['4821 KTB','0937 LMC','7712 JNF','3390 KRZ','5504 MPX','9981 KLD','2266 LTV','6650 JQW'];
+const TYPES = ['Taxi','VTC','Particular','Furgoneta','Taxi','VTC','Particular','Camión'];
+const LICENCIAS = ['LIC-4471-M','VTC-0092-M','','','LIC-5581-M','VTC-0143-M','',''];
+const TALLERES = ['Taller Central', 'AutoRápido Norte', 'Mecánica Sur', 'Taller San Blas'];
+const CENTER = [40.4168, -3.7038];
+const AVG_KM_PER_DAY = 120;     // referencia para traducir km restantes a "días equivalentes" y poder priorizar urgencia
+const SIM_KM_TIME_ACCEL = 40;   // acelera la simulación de km para que se note el avance en una demo corta
+
+function randRange(a,b){return a+Math.random()*(b-a);}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+// ---- Listas auxiliares que se van alimentando desde la app (responsables y centros/talleres) ----
+let responsablesList = ['Javier R.', 'Marta S.', 'Taller Central'];
+let centrosList = ['Taller Central', 'AutoRápido Norte', 'Mecánica Sur', 'ITV San Blas'];
+
+// ---- Catálogo de materiales / recambios habituales ----
+let materialesCatalog = [
+  {id:1, parte:'Filtro de aire', marca:'Mann-Filter', ref:'C 25 114'},
+  {id:2, parte:'Filtro de aceite', marca:'Bosch', ref:'0 451 103 331'},
+  {id:3, parte:'Filtro de combustible', marca:'Mahle', ref:'KL 83'},
+  {id:4, parte:'Filtro habitáculo', marca:'Mann-Filter', ref:'CU 2939'},
+  {id:5, parte:'Aceite motor 5W30', marca:'Castrol Edge', ref:'5L'},
+  {id:6, parte:'Pastillas de freno delanteras', marca:'Brembo', ref:'P 85 020'},
+];
+let nextMaterialId = materialesCatalog.length + 1;
+
+let nextTaskId = 1;
+function makeTask(tipo, opts){
+  return Object.assign({
+    id: nextTaskId++, tipo,
+    limiteType: 'fecha',      // 'fecha' | 'km'
+    fechaLimite: null, fechaPreaviso: null, kmLimite: null,
+    responsable: '', centro: '', materiales: null, notas: ''
+  }, opts||{});
+}
+
+let vehicles = PLATES.map((plate,i)=>({
+  id:i, plate, driver:NAMES[i], type:TYPES[i], licencia:LICENCIAS[i], otros:'',
+  isBlue:(TYPES[i]==='Taxi'||TYPES[i]==='VTC'),
+  active:true, inactiveReason:'',
+  lat: CENTER[0] + randRange(-0.03,0.03),
+  lng: CENTER[1] + randRange(-0.045,0.045),
+  rpm: Math.round(randRange(750,900)),
+  temp: Math.round(randRange(84,92)),
+  speed:0, voltage:14.1, dtcs:[], status:'ok', marker:null, appointment:null, engineOff:false,
+  estimatedKm: Math.round(randRange(15000,150000)),
+  photosByTipo:{fichaTecnica:[], permisoCirculacion:[], licenciaVtc:[], otros:[]},
+  photos:[], documents:[], damagePoints:[], maintenanceLog:[],
+  tasks: []
+}));
+vehicles.forEach(v=>{
+  const nextRevisionKm = Math.round(v.estimatedKm + randRange(-2000,8000));
+  const itvDate = new Date(Date.now() + Math.round(randRange(4,420))*86400000);
+  const seguroDate = new Date(Date.now() + Math.round(randRange(10,365))*86400000);
+  v.tasks.push(makeTask('ITV caducidad', {
+    limiteType:'fecha', fechaLimite: itvDate, fechaPreaviso: new Date(itvDate.getTime()-15*86400000),
+    responsable: pick(responsablesList), centro: 'ITV San Blas'
+  }));
+  v.tasks.push(makeTask('Seguro caducidad', {
+    limiteType:'fecha', fechaLimite: seguroDate, fechaPreaviso: new Date(seguroDate.getTime()-10*86400000),
+    responsable: pick(responsablesList), centro: ''
+  }));
+  v.tasks.push(makeTask('Revisión', {
+    limiteType:'km', kmLimite: nextRevisionKm, fechaPreaviso: null,
+    responsable: pick(responsablesList), centro: pick(centrosList), materiales: pick(['A','B'])
+  }));
+});
+let nextVehicleId = vehicles.length;
+
+function createVehicle(plate, type, licencia, otros, itvDate, seguroDate){
+  const estimatedKm = Math.round(randRange(5000,120000));
+  const v = {
+    id: nextVehicleId++, plate, driver:'Sin asignar', type, licencia:licencia||'', otros:otros||'',
+    isBlue:(type==='Taxi'||type==='VTC'),
+    active:true, inactiveReason:'',
+    lat: CENTER[0] + randRange(-0.03,0.03), lng: CENTER[1] + randRange(-0.045,0.045),
+    rpm: Math.round(randRange(750,900)), temp: Math.round(randRange(84,92)),
+    speed:0, voltage:14.1, dtcs:[], status:'ok', marker:null, appointment:null, engineOff:false,
+    estimatedKm,
+    photosByTipo:{fichaTecnica:[], permisoCirculacion:[], licenciaVtc:[], otros:[]},
+    photos:[], documents:[], damagePoints:[], maintenanceLog:[],
+    tasks: []
+  };
+  if(itvDate) v.tasks.push(makeTask('ITV caducidad', {limiteType:'fecha', fechaLimite: itvDate, fechaPreaviso: new Date(itvDate.getTime()-15*86400000)}));
+  if(seguroDate) v.tasks.push(makeTask('Seguro caducidad', {limiteType:'fecha', fechaLimite: seguroDate, fechaPreaviso: new Date(seguroDate.getTime()-10*86400000)}));
+  vehicles.push(v);
+  return v;
+}
+
+let selectedId = vehicles[0].id;
+let logEntries = [];
+let regFormOpen = false;
+let regExpandedId = null;
+let screen = 'login';       // 'login' | 'home' | 'map' | 'mantenimiento' | 'forecast' | 'vehiculos' | 'damage' | 'materiales'
+let homeDropdownOpen = false;
+let scannerMenu = 'root'; // 'root' | 'read' | 'live' | 'help'
+let leafletMapObj = null;
+let showAssistant = false;
+let pickerOpen = {};        // selector de vehículo genérico y reutilizable, una entrada por pantalla: {mant:false, damage:false, consumibles:false}
+
+// ---- Sesión / login ----
+let loggedIn = false;
+let currentUser = null;
+let loginError = '';
+let loginView = 'menu'; // 'menu' | 'login' | 'create' | 'admin' | 'adminList'
+const PROFILE_TYPES = ['Particular', 'Mini flota (autónomo)', 'Mini flota (pyme)', 'Flota'];
+let appUsers = [
+  {username:'user1', password:'1234', profile:'Flota', phone:'600 111 222', email:'gestor.flota@gmail.com'},
+  {username:'user2', password:'1234', profile:'Particular', phone:'600 222 333', email:'particular.demo@gmail.com'},
+  {username:'user3', password:'1234', profile:'Mini flota (autónomo)', phone:'600 333 444', email:'taxi.vtc@gmail.com'},
+  {username:'user4', password:'1234', profile:'Mini flota (pyme)', phone:'600 444 555', email:'pyme.flota@gmail.com'},
+];
+const ADMIN_PASSWORD = '1234';
+
+// ---- Selector de vehículo genérico (reutilizado por Mantenimiento, Daños y Consumibles) ----
+function vehiclePickerHTML(key){
+  const v = vehicles.find(x=>x.id===selectedId);
+  const open = !!pickerOpen[key];
+  return `
+    <div class="dropdown">
+      <div class="dropdown-header" id="picker-${key}-header">
+        <div class="dh-left">${plateBadge(v,'sm')}<span class="dh-info">${v.driver} · ${v.type}</span></div>
+        <span class="chevron ${open?'open':''}">▾</span>
+      </div>
+      ${open ? `<div class="dropdown-list" id="picker-${key}-list">${vehicles.map(vehRowHTML).join('')}</div>` : ''}
+    </div>
+  `;
+}
+function wireVehiclePicker(key, onSelect){
+  document.getElementById(`picker-${key}-header`).onclick = ()=>{ pickerOpen[key] = !pickerOpen[key]; renderScreen(); };
+  if(pickerOpen[key]){
+    document.querySelectorAll(`#picker-${key}-list .veh-row`).forEach(row=>{
+      row.onclick = ()=>{ selectedId = parseInt(row.dataset.id); pickerOpen[key]=false; if(onSelect) onSelect(); renderScreen(); };
+    });
+  }
+}
+
+// ---------- Helpers ----------
+function statusClass(v){ if(v.dtcs.length>0) return 'fault'; if(v.temp>98) return 'warn'; return 'ok'; }
+function statusColor(s){ return s==='fault' ? '#B00020' : (s==='warn' ? '#E9730C' : '#0E7D3C'); }
+function daysUntil(date){ return Math.round((date - new Date())/86400000); }
+function formatDate(date){ return date.toLocaleDateString('es-ES', {day:'2-digit',month:'short',year:'numeric'}); }
+function urgencyInfo(days){
+  if(days<0) return {color:'var(--red)', label:`VENCIDA (${Math.abs(days)}d)`};
+  if(days<=7) return {color:'var(--red)', label:`en ${days} día${days===1?'':'s'}`};
+  if(days<=30) return {color:'var(--orange)', label:`en ${days} días`};
+  return {color:'var(--green)', label:`en ${days} días`};
+}
+function formatKm(km){ return Math.round(km).toLocaleString('es-ES') + ' km'; }
+// Para tareas que vencen por km Y por fecha (p.ej. la revisión): calcula cuál de las dos
+// se cumple antes, traduciendo los km restantes a "días equivalentes" según el uso medio,
+// y usa el peor de los dos casos para decidir la urgencia.
+function remanenteFecha(date){
+  const daysLeft = daysUntil(date);
+  return {
+    text: daysLeft<0 ? `VENCIDA (${Math.abs(daysLeft)}d)` : `${daysLeft} días`,
+    sortValue: daysLeft,
+    info: urgencyInfo(daysLeft)
+  };
+}
+function vehTypeIcon(type){
+  if(type==='Taxi') return `<svg width="17" height="17" viewBox="0 0 24 24"><rect x="2" y="10" width="20" height="8" rx="2" fill="#FFC72C" stroke="#8a6d00" stroke-width="0.8"/><rect x="6" y="5" width="12" height="7" rx="2" fill="#FFC72C" stroke="#8a6d00" stroke-width="0.8"/><rect x="9" y="2" width="6" height="3" rx="1" fill="#111"/><circle cx="7" cy="18" r="2" fill="#222"/><circle cx="17" cy="18" r="2" fill="#222"/></svg>`;
+  if(type==='VTC') return `<svg width="17" height="17" viewBox="0 0 24 24"><rect x="2" y="10" width="20" height="8" rx="2" fill="#161616" stroke="#000" stroke-width="0.8"/><rect x="6" y="5" width="12" height="7" rx="2" fill="#161616" stroke="#000" stroke-width="0.8"/><circle cx="7" cy="18" r="2" fill="#000"/><circle cx="17" cy="18" r="2" fill="#000"/></svg>`;
+  if(type==='Furgoneta') return `<svg width="17" height="17" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="2" fill="#ffffff" stroke="#9aa3ad" stroke-width="1.1"/><circle cx="7" cy="18" r="2" fill="#333"/><circle cx="17" cy="18" r="2" fill="#333"/></svg>`;
+  if(type==='Camión') return `<svg width="17" height="17" viewBox="0 0 24 24"><rect x="1" y="8" width="14" height="9" rx="1" fill="#ffffff" stroke="#9aa3ad" stroke-width="1.1"/><rect x="15" y="10" width="8" height="7" rx="1" fill="#dfe4ea" stroke="#9aa3ad" stroke-width="1.1"/><circle cx="6" cy="18" r="2" fill="#333"/><circle cx="18" cy="18" r="2" fill="#333"/></svg>`;
+  return `<svg width="17" height="17" viewBox="0 0 24 24"><rect x="2" y="10" width="20" height="8" rx="2" fill="#9aa3ad" stroke="#6b7280" stroke-width="0.8"/><rect x="6" y="5" width="12" height="7" rx="2" fill="#9aa3ad" stroke="#6b7280" stroke-width="0.8"/><circle cx="7" cy="18" r="2" fill="#333"/><circle cx="17" cy="18" r="2" fill="#333"/></svg>`;
+}
+function plateBadge(v, size){
+  return `<span class="plate-es ${size} ${v.isBlue?'blue':''}">
+    <span class="eu-band"><span class="stars">★</span><span class="cc">E</span></span>
+    <span class="plate-body">${v.plate}</span>
+  </span>`;
+}
+function vehRowHTML(v){
+  const s = statusClass(v); v.status = s;
+  return `<div class="veh-row" data-id="${v.id}">
+    <div class="vr-left">
+      ${plateBadge(v,'sm')}
+      ${v.appointment ? '<span class="appt-flag">CITA</span>' : ''}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="vr-meta">${v.driver} · ${v.type}</span>
+      <span class="status-dot status-${s}"></span>
+    </div>
+  </div>`;
+}
+
+// ---------- Log ----------
+function addLog(text,type='info'){
+  const time = new Date().toLocaleTimeString('es-ES');
+  logEntries.push({time,text,type});
+  renderLog();
+}
+function renderLog(){
+  document.getElementById('logList').innerHTML = logEntries.slice(-40).reverse().map(e=>
+    `<div class="log-line ${e.type}"><span class="t">${e.time}</span><span>${e.text}</span></div>`).join('');
+}
+function refreshAlertPill(){
+  const el = document.getElementById('alertPill');
+  if(!el) return;
+  const n = vehicles.filter(v=>v.dtcs.length>0).length;
+  el.textContent = n + (n===1 ? ' alerta activa' : ' alertas activas');
+}
+function renderHeader(){
+  const header = document.getElementById('appHeader');
+  if(!loggedIn){
+    header.innerHTML = `<div class="brand"><span class="dot"></span>FLOTIA</div>`;
+    return;
+  }
+  header.innerHTML = `
+    <div class="brand"><span class="dot"></span>FLOTIA</div>
+    <div class="header-right">
+      <span class="user-chip">${currentUser.profile}</span>
+      <div class="alert-pill" id="alertPill">0 alertas</div>
+      <button class="logout-btn" id="logoutBtn">Salir</button>
+    </div>
+  `;
+  document.getElementById('logoutBtn').onclick = ()=>{ loggedIn=false; currentUser=null; loginView='menu'; screen='login'; renderScreen(); };
+}
+
+// ============ PANTALLA: LOGIN (FLOTIA) ============
+function renderLoginScreen(){
+  const content = document.getElementById('content');
+  content.classList.add('no-pad');
+
+  const header = `
+    <div class="login-logo">
+      <div class="login-logo-badge">FL</div>
+      <div class="login-title">FLOTIA</div>
+      <div class="login-sub">Sistema de gestión y diagnóstico de flota</div>
+    </div>
+  `;
+
+  let body = '';
+  if(loginView==='menu'){
+    body = `
+      <div class="login-menu">
+        <button class="login-menu-btn" id="goLoginForm">Usuario y contraseña<span class="lmb-sub">Ya tengo una cuenta</span></button>
+        <button class="login-menu-btn" id="goCreateUser">Crear usuario<span class="lmb-sub">Dar de alta un nuevo perfil</span></button>
+        <button class="login-menu-btn" id="goAdmin">Admin<span class="lmb-sub">Gestión de usuarios (solo administración)</span></button>
+      </div>
+      <div class="login-hint">Demo — la contraseña es 1234 para cualquier usuario</div>
+    `;
+  } else if(loginView==='login'){
+    body = `
+      <button class="login-back" id="loginBack">← Volver</button>
+      <div class="login-form">
+        <input type="text" id="loginUsername" placeholder="Usuario" autocomplete="off">
+        <input type="password" id="loginPassword" placeholder="Contraseña" maxlength="20">
+        ${loginError ? `<div class="login-error">${loginError}</div>` : ''}
+        <button class="login-btn" id="loginSubmit">Entrar</button>
+      </div>
+      <div class="login-hint">Demo — la contraseña es 1234 (usuarios: user1 a user4)</div>
+    `;
+  } else if(loginView==='create'){
+    body = `
+      <button class="login-back" id="loginBack">← Volver</button>
+      <div class="section-label" style="margin:4px 0 8px 2px;">Tipo de perfil</div>
+      <div class="profile-grid">
+        ${PROFILE_TYPES.map(p=>`<div class="profile-opt ${newUserForm.profile===p?'selected':''}" data-profile="${p}">${p}</div>`).join('')}
+      </div>
+      <div class="login-form" style="margin-top:14px;">
+        <input type="text" id="newUsername" placeholder="Usuario" value="${newUserForm.username}">
+        <input type="password" id="newPassword" placeholder="Contraseña" value="${newUserForm.password}">
+        <input type="tel" id="newPhone" placeholder="Teléfono" value="${newUserForm.phone}">
+        <input type="email" id="newEmail" placeholder="Correo Gmail (se asociará el Drive)" value="${newUserForm.email}">
+        ${loginError ? `<div class="login-error">${loginError}</div>` : ''}
+        <button class="login-btn" id="createUserSubmit">Crear usuario</button>
+      </div>
+    `;
+  } else if(loginView==='admin'){
+    body = `
+      <button class="login-back" id="loginBack">← Volver</button>
+      <div class="login-form">
+        <input type="password" id="adminPassword" placeholder="Contraseña de administrador">
+        ${loginError ? `<div class="login-error">${loginError}</div>` : ''}
+        <button class="login-btn" id="adminSubmit">Acceder</button>
+      </div>
+    `;
+  } else if(loginView==='adminList'){
+    body = `
+      <button class="login-back" id="loginBack">← Volver</button>
+      <div class="section-label" style="margin:4px 0 4px 2px;">Usuarios dados de alta (${appUsers.length})</div>
+      <table class="admin-table">
+        <thead><tr><th>Usuario</th><th>Perfil</th><th>Teléfono</th><th>Correo</th><th></th></tr></thead>
+        <tbody>
+          ${appUsers.map(u=>`
+            <tr>
+              <td>${u.username}</td>
+              <td>${u.profile}</td>
+              <td>${u.phone}</td>
+              <td>${u.email}</td>
+              <td><button class="admin-del-btn" data-username="${u.username}">Borrar</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  content.innerHTML = `<div class="login-screen">${header}${body}</div>`;
+
+  if(loginView==='menu'){
+    document.getElementById('goLoginForm').onclick = ()=>{ loginView='login'; loginError=''; renderScreen(); };
+    document.getElementById('goCreateUser').onclick = ()=>{ loginView='create'; loginError=''; renderScreen(); };
+    document.getElementById('goAdmin').onclick = ()=>{ loginView='admin'; loginError=''; renderScreen(); };
+  } else if(loginView==='login'){
+    document.getElementById('loginBack').onclick = ()=>{ loginView='menu'; loginError=''; renderScreen(); };
+    document.getElementById('loginSubmit').onclick = attemptLogin;
+    document.getElementById('loginPassword').onkeydown = (e)=>{ if(e.key==='Enter') attemptLogin(); };
+    document.getElementById('loginUsername').onkeydown = (e)=>{ if(e.key==='Enter') document.getElementById('loginPassword').focus(); };
+  } else if(loginView==='create'){
+    document.getElementById('loginBack').onclick = ()=>{ loginView='menu'; loginError=''; renderScreen(); };
+    content.querySelectorAll('.profile-opt').forEach(opt=>{
+      opt.onclick = ()=>{ newUserForm.profile = opt.dataset.profile; renderScreen(); };
+    });
+    document.getElementById('createUserSubmit').onclick = attemptCreateUser;
+  } else if(loginView==='admin'){
+    document.getElementById('loginBack').onclick = ()=>{ loginView='menu'; loginError=''; renderScreen(); };
+    document.getElementById('adminSubmit').onclick = attemptAdminAccess;
+    document.getElementById('adminPassword').onkeydown = (e)=>{ if(e.key==='Enter') attemptAdminAccess(); };
+  } else if(loginView==='adminList'){
+    document.getElementById('loginBack').onclick = ()=>{ loginView='menu'; renderScreen(); };
+    content.querySelectorAll('.admin-del-btn').forEach(btn=>{
+      btn.onclick = ()=>{
+        appUsers = appUsers.filter(u=>u.username!==btn.dataset.username);
+        renderScreen();
+      };
+    });
+  }
+}
+let newUserForm = {profile:'Particular', username:'', password:'', phone:'', email:''};
+function attemptLogin(){
+  const username = document.getElementById('loginUsername').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value.trim();
+  const user = appUsers.find(u=>u.username===username && u.password===password);
+  if(user){
+    loggedIn = true; currentUser = user; loginError=''; loginView='menu'; screen='home';
+    addLog(`Sesión iniciada como ${user.username} (${user.profile})`, 'clear');
+    renderScreen();
+  } else {
+    loginError = 'Usuario o contraseña incorrectos.';
+    renderScreen();
+  }
+}
+function attemptCreateUser(){
+  const username = document.getElementById('newUsername').value.trim().toLowerCase();
+  const password = document.getElementById('newPassword').value.trim();
+  const phone = document.getElementById('newPhone').value.trim();
+  const email = document.getElementById('newEmail').value.trim();
+  if(!username || !password){ loginError = 'Usuario y contraseña son obligatorios.'; renderScreen(); return; }
+  if(appUsers.find(u=>u.username===username)){ loginError = 'Ese usuario ya existe.'; renderScreen(); return; }
+  const user = {username, password, profile:newUserForm.profile, phone, email};
+  appUsers.push(user);
+  addLog(`Usuario creado: ${username} (${user.profile})`, 'clear');
+  newUserForm = {profile:'Particular', username:'', password:'', phone:'', email:''};
+  loginError = '';
+  loginView = 'login';
+  renderScreen();
+}
+function attemptAdminAccess(){
+  const pass = document.getElementById('adminPassword').value.trim();
+  if(pass===ADMIN_PASSWORD){ loginView='adminList'; loginError=''; renderScreen(); }
+  else { loginError = 'Contraseña de administrador incorrecta.'; renderScreen(); }
+}
+
+// ============ PANTALLA: HOME ============
+function renderHome(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+  const sel = vehicles.find(v=>v.id===selectedId);
+  const activeAlerts = vehicles.filter(v=>v.dtcs.length>0).length;
+
+  content.innerHTML = `
+    <div class="home-screen">
+      <div>
+        <div class="section-label" style="margin-bottom:8px;">Vehículo seleccionado</div>
+        <div class="dropdown">
+          <div class="dropdown-header" id="homeDropdownHeader">
+            <div class="dh-left">
+              ${plateBadge(sel,'sm')}
+              <span class="dh-info">${sel.driver} · ${sel.type}</span>
+            </div>
+            <span class="chevron ${homeDropdownOpen?'open':''}">▾</span>
+          </div>
+          ${homeDropdownOpen ? `<div class="dropdown-list" id="homeDropdownList">${vehicles.map(vehRowHTML).join('')}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <div class="nav-btn" id="goVehBtn">
+          <span class="icon">🚗</span>
+          <span>Vehículos<span class="nb-sub">Buscar matrícula, tareas y alta de vehículos</span></span>
+        </div>
+        <div class="nav-btn" id="goMapBtn">
+          <span class="icon">🗺️</span>
+          <span>Mapa flota<span class="nb-sub">Posición de toda la flota en tiempo real</span></span>
+        </div>
+        <div class="nav-btn" id="goForecastBtn">
+          <span class="icon">📋</span>
+          <span>Previsión de flota<span class="nb-sub">Tareas, revisiones, ITV y seguros de cada coche</span></span>
+        </div>
+        <div class="nav-btn" id="goMaterialesBtn">
+          <span class="icon">🧰</span>
+          <span>Materiales<span class="nb-sub">Referencias y marcas de recambios habituales</span></span>
+        </div>
+        <div class="nav-btn" id="goDamageBtn">
+          <span class="icon">💥</span>
+          <span>Daños<span class="nb-sub">Diagrama 2D con golpes marcados y estado del coche</span></span>
+        </div>
+        <div class="nav-btn" id="goMantBtn">
+          <span class="icon">🔧</span>
+          <span>Escáner<span class="nb-sub">Leer y borrar códigos, datos en tiempo real, diagnosis</span></span>
+        </div>
+      </div>
+
+      <div class="home-summary">${vehicles.length} vehículos en flota · ${activeAlerts} con avería activa</div>
+    </div>
+  `;
+
+  document.getElementById('homeDropdownHeader').onclick = ()=>{ homeDropdownOpen = !homeDropdownOpen; renderHome(); };
+  if(homeDropdownOpen){
+    content.querySelectorAll('#homeDropdownList .veh-row').forEach(row=>{
+      row.onclick = ()=>{ selectedId = parseInt(row.dataset.id); homeDropdownOpen=false; renderHome(); };
+    });
+  }
+  document.getElementById('goVehBtn').onclick = ()=>{ screen='vehiculos'; vehiculosMode='lookup'; vehiculosPlateInput=''; renderScreen(); };
+  document.getElementById('goMapBtn').onclick = ()=>{ screen='map'; renderScreen(); };
+  document.getElementById('goMantBtn').onclick = ()=>{ screen='mantenimiento'; pickerOpen.mant=false; scannerMenu='root'; showAssistant=false; renderScreen(); };
+  document.getElementById('goForecastBtn').onclick = ()=>{ screen='forecast'; renderScreen(); };
+  document.getElementById('goMaterialesBtn').onclick = ()=>{ screen='materiales'; renderScreen(); };
+  document.getElementById('goDamageBtn').onclick = ()=>{ screen='damage'; pickerOpen.damage=false; renderScreen(); };
+}
+
+// ============ PANTALLA: MAPA ============
+function makeDivIcon(v){
+  const color = statusColor(v.status);
+  const sel = v.id===selectedId ? 'outline:2px solid #fff;' : '';
+  return L.divIcon({className:'', html:`<div style="width:13px;height:13px;border-radius:50%;background:${color};border:2px solid #0A0A0B;box-shadow:0 0 6px ${color};${sel}"></div>`, iconSize:[13,13], iconAnchor:[7,7]});
+}
+function initMapScreen(){
+  if(leafletMapObj){ leafletMapObj.remove(); leafletMapObj=null; }
+  leafletMapObj = L.map('leafletMap', {zoomControl:false, attributionControl:true}).setView(CENTER, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18, attribution:'&copy; OpenStreetMap'}).addTo(leafletMapObj);
+  L.control.zoom({position:'bottomright'}).addTo(leafletMapObj);
+  vehicles.forEach(v=>{
+    v.status = statusClass(v);
+    v.marker = L.marker([v.lat, v.lng], {icon: makeDivIcon(v)}).addTo(leafletMapObj);
+    v.marker.bindTooltip(v.plate, {permanent:true, direction:'top', offset:[0,-6], className:'marker-label'});
+    v.marker.on('click', ()=>{ selectedId=v.id; refreshMapMarkers(); renderMapSelectedBar(); });
+  });
+}
+function refreshMapMarkers(){
+  if(!leafletMapObj) return;
+  vehicles.forEach(v=>{ if(v.marker){ v.marker.setLatLng([v.lat,v.lng]); v.marker.setIcon(makeDivIcon(v)); }});
+}
+function renderMapSelectedBar(){
+  const bar = document.getElementById('mapSelectedBar');
+  if(!bar) return;
+  const v = vehicles.find(x=>x.id===selectedId);
+  bar.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">${plateBadge(v,'sm')}<span style="font-size:12px;color:var(--muted);">${v.driver}</span></div>
+    <button class="msb-btn" id="openInScanner">Abrir en mantenimiento</button>
+  `;
+  document.getElementById('openInScanner').onclick = ()=>{ screen='mantenimiento'; pickerOpen.mant=false; scannerMenu='root'; showAssistant=false; renderScreen(); };
+}
+function renderMapScreen(){
+  const content = document.getElementById('content');
+  content.classList.add('no-pad');
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Volver</button>
+      <div class="sub-title">Mapa en directo</div>
+    </div>
+    <div id="mapScreenBody"><div id="leafletMap"></div></div>
+    <div class="map-selected-bar" id="mapSelectedBar"></div>
+  `;
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  renderMapSelectedBar();
+  setTimeout(()=>{ initMapScreen(); leafletMapObj.invalidateSize(); }, 30);
+}
+
+// ============ PANTALLA: SCANNER ============
+function severityInfo(sev){
+  if(sev==='alta') return {color:'var(--red)', label:'⚠ Gravedad alta — recomendable ir al taller pronto'};
+  if(sev==='media') return {color:'var(--orange)', label:'◐ Gravedad media — vigilar, no es urgente'};
+  return {color:'var(--green)', label:'● Gravedad baja — no supone riesgo inmediato'};
+}
+function renderAssistantPanel(v){
+  if(!showAssistant || v.dtcs.length===0) return '';
+  const blocks = v.dtcs.map(d=>{
+    const sev = severityInfo(d.severity);
+    return `
+      <div class="ai-code-block">
+        <div class="ai-code-title">${d.code} — ${d.desc}</div>
+        <div class="ai-severity" style="color:${sev.color};background:${sev.color}22;">${sev.label}</div>
+        <div class="ai-advice-text">${d.advice}</div>
+      </div>
+    `;
+  }).join('<hr style="border:none;border-top:1px solid #2e3040;margin:10px 0;">');
+  return `
+    <div class="ai-panel">
+      <div class="ai-panel-top">🤖 Claude · Diagnóstico asistido</div>
+      ${blocks}
+      <div class="ai-disclaimer">Orientativo, no sustituye la revisión de un mecánico. En la versión real, esto lo generaría Claude en el momento a partir de los datos del vehículo.</div>
+    </div>
+  `;
+}
+function renderLcdContent(v){
+  if(scannerMenu==='root'){
+    return `<div class="lcd-line small">SISTEMA LISTO</div><div class="lcd-line">SELECCIONA UNA OPCIÓN<span class="lcd-cursor"></span></div>`;
+  }
+  if(scannerMenu==='read'){
+    if(v.dtcs.length===0) return `<div class="lcd-line">NO FAULT CODES<span class="lcd-cursor"></span></div><div class="lcd-line small">SYSTEM OK · READY</div>`;
+    return v.dtcs.map(d=>`<div class="lcd-line"><span class="lcd-code">${d.code}</span></div><div class="lcd-line small">${d.desc.toUpperCase()}</div>`).join('<div style="height:6px"></div>');
+  }
+  // 'live' y 'help' muestran igualmente los datos en vivo de fondo
+  const dtcOn = v.dtcs.length>0;
+  const cons = instantConsumption(v);
+  const rows = [
+    ['RPM', String(v.rpm)],
+    ['VELOCIDAD', `${v.speed} KM/H`],
+    ['REFRIGERANTE', `${v.temp} °C`],
+    ['CONSUMO INST.', `${cons.value} ${cons.unit}`],
+    ['BATERÍA', `${v.voltage.toFixed(1)} V`],
+    ['KM (ESTIMADO)', `${Math.round(v.estimatedKm).toLocaleString('es-ES')} KM`],
+    ['MOTOR', dtcOn ? 'AVERÍA' : 'OK'],
+    ['ESTADO', v.engineOff ? 'DETENIDO' : 'EN MARCHA'],
+  ];
+  return `
+    <div class="lcd-live-grid">
+      ${rows.map(([label,val])=>`<div class="lcd-live-row"><span class="llr-label">${label}</span><span class="llr-value">${val}</span></div>`).join('')}
+    </div>
+  `;
+}
+// ---- Cuadro de instrumentos estilo BMW (2005) — funcional, no decorativo ----
+function carGauge(value, max, unit, redlineFrom, size){
+  size = size || 112;
+  const cx=size/2, cy=size/2+3, r=size*0.4;
+  const sweepStart=-130, sweepEnd=130;
+  const frac = Math.max(0, Math.min(1, value/max));
+  const needleAngle = sweepStart + frac*(sweepEnd-sweepStart);
+  function pt(angleDeg, radius){ const a=(angleDeg-90)*Math.PI/180; return [cx+radius*Math.cos(a), cy+radius*Math.sin(a)]; }
+  let ticks = '';
+  const nTicks = 10;
+  for(let i=0;i<=nTicks;i++){
+    const ang = sweepStart + (i/nTicks)*(sweepEnd-sweepStart);
+    const isRed = redlineFrom!==undefined && (i/nTicks) >= redlineFrom;
+    const [x1,y1] = pt(ang, r);
+    const [x2,y2] = pt(ang, r-7);
+    ticks += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${isRed?'#E5342E':'#EDEAE0'}" stroke-width="2"/>`;
+  }
+  const [nx,ny] = pt(needleAngle, r-12);
+  return `
+  <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r+6}" fill="#040404" stroke="#4a4a4a" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#000"/>
+    ${ticks}
+    <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#FF7A1A" stroke-width="2.2" stroke-linecap="round" style="filter:drop-shadow(0 0 4px #FF7A1A);"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#c9cace"/>
+    <circle cx="${cx}" cy="${cy}" r="2.2" fill="#1a1a1a"/>
+    <text x="${cx}" y="${cy+r-16}" text-anchor="middle" font-size="7.5" fill="#8a8a80" font-family="Arial">${unit}</text>
+  </svg>`;
+}
+// mini reloj analógico de temperatura de refrigerante (zona fría-azul / caliente-roja, como el cuadro real)
+function miniTempGauge(temp){
+  const size=54, cx=27, cy=30, r=20;
+  const sweepStart=-90, sweepEnd=90; // solo medio arco, como los relojes de temperatura reales
+  const frac = Math.max(0, Math.min(1, (temp-40)/(120-40)));
+  const needleAngle = sweepStart + frac*(sweepEnd-sweepStart);
+  function pt(angleDeg, radius){ const a=(angleDeg-90)*Math.PI/180; return [cx+radius*Math.cos(a), cy+radius*Math.sin(a)]; }
+  const [nx,ny] = pt(needleAngle, r-6);
+  const [cxA,cyA] = pt(sweepStart, r);
+  const [cxB,cyB] = pt(sweepEnd, r);
+  return `
+  <svg width="${size}" height="${size*0.68}" viewBox="0 0 ${size} ${size*0.68}">
+    <path d="M ${cxA.toFixed(1)} ${cyA.toFixed(1)} A ${r} ${r} 0 0 1 ${cxB.toFixed(1)} ${cyB.toFixed(1)}" fill="none" stroke="#2a3a55" stroke-width="4"/>
+    <path d="M ${pt(sweepStart+ (sweepEnd-sweepStart)*0.72,r)[0].toFixed(1)} ${pt(sweepStart+(sweepEnd-sweepStart)*0.72,r)[1].toFixed(1)} A ${r} ${r} 0 0 1 ${cxB.toFixed(1)} ${cyB.toFixed(1)}" fill="none" stroke="#5a2020" stroke-width="4"/>
+    <text x="4" y="${cy+2}" font-size="7" fill="#6a8fc9" font-family="Arial">C</text>
+    <text x="${size-9}" y="${cy+2}" font-size="7" fill="#c96a6a" font-family="Arial">H</text>
+    <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="2.5" fill="#c9cace"/>
+  </svg>`;
+}
+function engineFaultLightSVG(active, big){
+  const color = active ? '#FF7A1A' : '#3a352a';
+  const glow = active ? `filter:drop-shadow(0 0 ${big?10:6}px #FF7A1A);` : '';
+  const w = big ? 46 : 32, h = big ? 31 : 22;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 30 20" style="${glow}">
+    <path d="M12,2 L18,2 L18,5 L20,5 L20,7 L22,7 L22,9 L24,9 L24,12 L22,12 L22,15 L20,15 L20,17 L10,17 L10,15 L8,15 L8,12 L10,12 L10,5 L12,5 Z" fill="${color}"/>
+    <rect x="6" y="8" width="4" height="2" fill="${color}"/>
+    <rect x="6" y="11" width="4" height="2" fill="${color}"/>
+  </svg>`;
+}
+function instantConsumption(v){
+  // simulación de consumo instantáneo: sube con RPM/carga, baja a ralentí/parado
+  if(v.engineOff) return {value:'0.0', unit:'L/H'};
+  if(v.speed===0) return {value: (v.rpm/1400).toFixed(1), unit:'L/H'};
+  const base = 3.5 + (v.rpm/7000)*9 + (v.speed>100 ? 1.5 : 0);
+  return {value: Math.max(3.2, Math.min(18, base)).toFixed(1), unit:'L/100KM'};
+}
+// ---- Cuadro de instrumentos (diseño propio: RPM + velocidad analógicos, testigo de motor central,
+// mini-reloj de temperatura, y una tira digital con el resto de datos OBD en vivo) ----
+function carClusterHTML(v){
+  const dtcOn = v.dtcs.length>0;
+  const cons = instantConsumption(v);
+  return `
+    <div class="car-cluster">
+      <div class="cc-gauges-row">
+        <div class="bmw-gauge-block">
+          ${carGauge(v.rpm, 7000, 'x1000 RPM', 0.85)}
+          <div class="bmw-gauge-label">RPM</div>
+        </div>
+        <div class="cc-center-col">
+          <div class="cc-mil ${dtcOn?'on':''}" title="Testigo de avería del motor (MIL)">${engineFaultLightSVG(dtcOn, true)}</div>
+          <div class="cc-mil-text" style="color:${dtcOn?'#FF7A1A':'#4a463a'};">${dtcOn ? 'CHECK ENGINE' : 'MOTOR OK'}</div>
+          ${miniTempGauge(v.temp)}
+          <div class="bmw-gauge-label" style="margin-top:-6px;">TEMP</div>
+        </div>
+        <div class="bmw-gauge-block">
+          ${carGauge(v.speed, 240, 'KM/H')}
+          <div class="bmw-gauge-label">VELOCIDAD</div>
+        </div>
+      </div>
+
+      <div class="cc-digital-strip">
+        <div class="cc-digital-item"><span class="cc-di-label">Consumo inst.</span><span class="cc-di-value">${cons.value} <small>${cons.unit}</small></span></div>
+        <div class="cc-digital-item"><span class="cc-di-label">Batería</span><span class="cc-di-value">${v.voltage.toFixed(1)} <small>V</small></span></div>
+        <div class="cc-digital-item"><span class="cc-di-label">Km estimados</span><span class="cc-di-value">${Math.round(v.estimatedKm).toLocaleString('es-ES')} <small>km</small></span></div>
+      </div>
+
+      <button class="engine-off-btn ${v.engineOff?'is-off':''}" id="engineOffBtn">
+        ${v.engineOff ? '▶ ENCENDER MOTOR' : '⏻ OFF — PARAR MOTOR'}
+      </button>
+      ${v.engineOff ? '<div class="cc-off-note">Motor detenido remotamente. El vehículo no puede circular.</div>' : ''}
+    </div>
+  `;
+}
+
+// ============ PANTALLA: MANTENIMIENTO / ESCÁNER (menú tipo máquina real de diagnosis) ============
+function renderMantenimientoScreen(){
+  const content = document.getElementById('content');
+  content.classList.add('no-pad');
+  const v = vehicles.find(x=>x.id===selectedId);
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Volver</button>
+      <div class="sub-title">Escáner</div>
+    </div>
+    <div id="scannerBody">
+      ${vehiclePickerHTML('mant')}
+
+      <div class="scanner">
+        <div class="scanner-top">
+          <div class="st-left">
+            <div class="scanner-mil-sm" title="Testigo de avería del motor (MIL)">${engineFaultLightSVG(v.dtcs.length>0, false)}</div>
+            <div class="scanner-brand">OBD-II · Universal Scan Tool</div>
+          </div>
+          <div class="scanner-led"></div>
+        </div>
+        <div class="lcd-screen">${renderLcdContent(v)}</div>
+        <div class="scanner-keys" style="flex-wrap:wrap;">
+          <button class="key ${scannerMenu==='read'?'active':''}" id="menuReadBtn" style="flex:1 1 46%;">Leer códigos${v.dtcs.length>0?' ●':''}</button>
+          <button class="key" id="menuClearBtn" ${v.dtcs.length===0?'disabled':''} style="flex:1 1 46%;">Borrar códigos</button>
+          <button class="key ${scannerMenu==='live'?'active':''}" id="menuLiveBtn" style="flex:1 1 46%;">Datos en tiempo real</button>
+          <button class="key" id="menuHelpBtn" style="flex:1 1 46%;">Ayuda diagnosis</button>
+        </div>
+        ${scannerMenu==='read' && v.dtcs.length>0 ? `
+          <div class="scanner-keys">
+            <button class="key" id="shareBtn"><span class="key-dot" style="background:var(--green);"></span>Compartir</button>
+            <button class="key k-appt" id="apptBtn" ${v.appointment?'disabled':''}><span class="key-dot" style="background:var(--orange);"></span>Pedir cita</button>
+          </div>
+        ` : ''}
+        ${renderAssistantPanel(v)}
+        <button class="engine-off-btn ${v.engineOff?'is-off':''}" id="engineOffBtn">
+          ${v.engineOff ? '▶ ENCENDER MOTOR' : '⏻ OFF — PARAR MOTOR'}
+        </button>
+        ${v.engineOff ? '<div class="cc-off-note">Motor detenido remotamente. El vehículo no puede circular.</div>' : ''}
+      </div>
+      ${v.appointment ? `<div style="margin-top:12px;font-size:12.5px;color:var(--orange);background:rgba(10,110,209,0.06);border:1px solid rgba(10,110,209,0.3);padding:10px 12px;border-radius:6px;">Cita solicitada — ${v.appointment.taller}, ${formatDate(v.appointment.date)} a las ${v.appointment.hora}.</div>` : ''}
+    </div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  wireVehiclePicker('mant', ()=>{ scannerMenu='root'; showAssistant=false; });
+  document.getElementById('menuReadBtn').onclick = ()=>{ scannerMenu='read'; showAssistant=false; renderScreen(); };
+  document.getElementById('menuLiveBtn').onclick = ()=>{ scannerMenu='live'; showAssistant=false; renderScreen(); };
+  document.getElementById('menuClearBtn').onclick = ()=>{ if(v.dtcs.length>0) confirmClear(v); };
+  document.getElementById('menuHelpBtn').onclick = ()=>{
+    if(v.dtcs.length===0){ showToast('Sin códigos activos', 'No hay averías que diagnosticar en este vehículo.'); return; }
+    scannerMenu='read'; showAssistant = true; renderScreen();
+  };
+  const shareBtn = document.getElementById('shareBtn');
+  if(shareBtn) shareBtn.onclick = ()=>shareToWorkshop(v);
+  const apptBtn = document.getElementById('apptBtn');
+  if(apptBtn) apptBtn.onclick = ()=>requestAppointment(v);
+  document.getElementById('engineOffBtn').onclick = ()=>{
+    if(v.engineOff){
+      v.engineOff = false;
+      addLog(`${v.plate} → motor reactivado remotamente`, 'clear');
+      renderScreen();
+    } else {
+      confirmEngineOff(v);
+    }
+  };
+}
+function confirmEngineOff(v){
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>⚠ ¿Parar el motor a distancia?</h3>
+      <p>Se enviará la orden de inmovilización al vehículo ${v.plate}. El coche se detendrá y no podrá volver a arrancar hasta que lo reactives desde aquí. Úsalo solo en caso de robo o emergencia grave.</p>
+      <div class="modal-buttons">
+        <button class="btn-cancel">Cancelar</button>
+        <button class="btn-confirm">Parar motor</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.btn-cancel').onclick = ()=>overlay.remove();
+  overlay.querySelector('.btn-confirm').onclick = ()=>{
+    v.engineOff = true;
+    v.speed = 0; v.rpm = 0;
+    overlay.remove();
+    addLog(`${v.plate} → ⚠ motor detenido remotamente`, 'fault');
+    showToast('Motor detenido', `${v.plate} se ha inmovilizado de forma remota.`);
+    renderScreen();
+  };
+}
+
+// ============ PANTALLA: PREVISIÓN DE FLOTA (tabla tipo AMOS) ============
+
+const MATERIALES_REVISION = {
+  A: 'Aceite + 2 filtros',
+  B: 'Aceite + 4 filtros'
+};
+let forecastSearch = '';
+let forecastFilter = 'all'; // 'all' | 'overdue' | 'soon'
+let forecastShowInactive = false;
+let forecastSort = {key:'preaviso', dir:1};
+
+function preavisoSortValue(v,t){
+  if(t.fechaPreaviso) return daysUntil(t.fechaPreaviso);
+  if(t.limiteType==='km' && t.kmLimite!=null) return Math.round((t.kmLimite - v.estimatedKm)/AVG_KM_PER_DAY);
+  if(t.fechaLimite) return daysUntil(t.fechaLimite);
+  return 999999;
+}
+function remanenteTask(v,t){
+  if(t.limiteType==='km'){
+    const kmLeft = Math.round((t.kmLimite||0) - v.estimatedKm);
+    const virtualDays = Math.round(kmLeft/AVG_KM_PER_DAY);
+    return {text:`${formatKm(kmLeft)}`, sortValue:virtualDays, info:urgencyInfo(virtualDays)};
+  }
+  if(!t.fechaLimite) return {text:'—', sortValue:999999, info:{color:'var(--muted)', label:'—'}};
+  const daysLeft = daysUntil(t.fechaLimite);
+  return {text: daysLeft<0?`VENCIDA (${Math.abs(daysLeft)}d)`:`${daysLeft} días`, sortValue:daysLeft, info:urgencyInfo(daysLeft)};
+}
+function buildForecastItems(){
+  let items = [];
+  vehicles.forEach(v=>{
+    v.tasks.forEach(t=>{
+      items.push({v, t, tarea:t.tipo, remanente:remanenteTask(v,t), preaviso:preavisoSortValue(v,t)});
+    });
+    if(v.appointment) items.push({v, t:{tipo:'Cita', limiteType:'fecha', fechaLimite:v.appointment.date, fechaPreaviso:null, responsable:'', centro:v.appointment.taller, materiales:null}, tarea:`Cita — ${v.appointment.taller}`, remanente:remanenteFecha(v.appointment.date), preaviso:daysUntil(v.appointment.date)});
+  });
+  return items;
+}
+
+function renderForecastScreen(){
+  const content = document.getElementById('content');
+  content.classList.add('no-pad');
+
+  let items = buildForecastItems();
+
+  if(!forecastShowInactive) items = items.filter(it => it.v.active!==false);
+
+  // filtro por texto (matrícula, conductor, licencia o tarea)
+  if(forecastSearch.trim()!==''){
+    const q = forecastSearch.toLowerCase();
+    items = items.filter(it => it.v.plate.toLowerCase().includes(q) || it.v.driver.toLowerCase().includes(q) || (it.v.licencia||'').toLowerCase().includes(q) || it.tarea.toLowerCase().includes(q));
+  }
+  // filtro por estado
+  if(forecastFilter==='overdue') items = items.filter(it => it.remanente.sortValue < 0);
+  if(forecastFilter==='soon') items = items.filter(it => it.remanente.sortValue >= 0 && it.remanente.sortValue <= 30);
+
+  // orden por columna (por defecto: preaviso, de menor a mayor)
+  items.sort((a,b)=>{
+    let av, bv;
+    if(forecastSort.key==='plate'){ av=a.v.plate; bv=b.v.plate; }
+    else if(forecastSort.key==='tarea'){ av=a.tarea; bv=b.tarea; }
+    else if(forecastSort.key==='licencia'){ av=a.v.licencia||''; bv=b.v.licencia||''; }
+    else if(forecastSort.key==='responsable'){ av=a.t.responsable||''; bv=b.t.responsable||''; }
+    else if(forecastSort.key==='centro'){ av=a.t.centro||''; bv=b.t.centro||''; }
+    else if(forecastSort.key==='remanente'){ av=a.remanente.sortValue; bv=b.remanente.sortValue; }
+    else { av=a.preaviso; bv=b.preaviso; }
+    if(av<bv) return -1*forecastSort.dir;
+    if(av>bv) return 1*forecastSort.dir;
+    return 0;
+  });
+
+  function arrow(key){ return forecastSort.key===key ? `<span class="arrow">${forecastSort.dir===1?'▲':'▼'}</span>` : ''; }
+
+  const rows = items.map(it=>{
+    const info = it.remanente.info;
+    const t = it.t;
+    const materialesCell = t.tipo==='Revisión'
+      ? `<select class="mat-select" data-vid="${it.v.id}" data-tid="${t.id}">
+           <option value="A" ${t.materiales==='A'?'selected':''}>${MATERIALES_REVISION.A}</option>
+           <option value="B" ${t.materiales==='B'?'selected':''}>${MATERIALES_REVISION.B}</option>
+         </select>`
+      : '—';
+    return `
+      <tr class="${it.v.active===false?'amos-inactive-row':''}">
+        <td><span class="plain-plate-cell">${vehTypeIcon(it.v.type)}<span class="plain-plate-text">${it.v.plate}</span></span></td>
+        <td>${it.v.licencia || '—'}</td>
+        <td>${it.tarea}</td>
+        <td>${materialesCell}</td>
+        <td>${t.fechaLimite ? formatDate(t.fechaLimite) : (t.kmLimite!=null ? formatKm(t.kmLimite) : '—')}</td>
+        <td>${t.fechaPreaviso ? formatDate(t.fechaPreaviso) : '—'}</td>
+        <td style="color:${info.color};font-weight:700;">${it.remanente.text}</td>
+        <td>
+          <select class="resp-select" data-vid="${it.v.id}" data-tid="${t.id}">
+            <option value="">—</option>
+            ${responsablesList.map(r=>`<option value="${r}" ${t.responsable===r?'selected':''}>${r}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="centro-select" data-vid="${it.v.id}" data-tid="${t.id}">
+            <option value="">—</option>
+            ${centrosList.map(c=>`<option value="${c}" ${t.centro===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </td>
+        <td><span class="amos-chip" style="color:${info.color};background:${info.color}22;border:1px solid ${info.color}55;">${info.label}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Volver</button>
+      <div class="sub-title">Previsión de flota</div>
+    </div>
+    <div class="amos-window">
+      <div class="amos-titlebar">📋 Tabla de previsión — Tareas de flota</div>
+      <div class="amos-toolbar">
+        <input type="text" id="forecastSearchInput" placeholder="Buscar por matrícula, licencia o tarea..." value="${forecastSearch}">
+        <select id="forecastFilterSelect">
+          <option value="all" ${forecastFilter==='all'?'selected':''}>Todas</option>
+          <option value="overdue" ${forecastFilter==='overdue'?'selected':''}>Vencidas</option>
+          <option value="soon" ${forecastFilter==='soon'?'selected':''}>Próximas 30 días</option>
+        </select>
+        <button class="toggle-inactive-btn ${forecastShowInactive?'is-inactive':''}" id="toggleInactiveBtn">${forecastShowInactive?'Ocultar inactivos':'Mostrar inactivos'}</button>
+      </div>
+      <div class="amos-toolbar" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;">
+            <div style="font-size:9.5px;color:#41547a;margin-bottom:3px;">Añadir responsable</div>
+            <div class="toolbar-addrow"><input type="text" id="newRespInput" placeholder="Nombre"><button id="addRespBtn">+</button></div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:9.5px;color:#41547a;margin-bottom:3px;">Añadir centro / taller</div>
+            <div class="toolbar-addrow"><input type="text" id="newCentroInput" placeholder="Nombre"><button id="addCentroBtn">+</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="amos-table-wrap">
+        <table class="amos-table">
+          <thead>
+            <tr>
+              <th data-key="plate">Matrícula${arrow('plate')}</th>
+              <th data-key="licencia">Licencia/VTC${arrow('licencia')}</th>
+              <th data-key="tarea">Tarea${arrow('tarea')}</th>
+              <th>Materiales</th>
+              <th>Fecha límite</th>
+              <th>Preaviso</th>
+              <th data-key="remanente">Remanente${arrow('remanente')}</th>
+              <th data-key="responsable">Responsable${arrow('responsable')}</th>
+              <th data-key="centro">Centro${arrow('centro')}</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="10" style="text-align:center;color:#7a8aa5;padding:18px;">Sin resultados</td></tr>`}</tbody>
+        </table>
+      </div>
+      <div class="amos-footer">
+        <div class="amos-count">${items.length} tarea${items.length===1?'':'s'}</div>
+        <div style="display:flex;gap:8px;">
+          <button class="amos-export-btn" id="exportExcelBtn">⬇ Excel</button>
+          <button class="amos-export-btn" id="exportPdfBtn" style="background:#1e4fa8;">⬇ PDF</button>
+        </div>
+      </div>
+    </div>
+    <div id="printArea" style="display:none;"></div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  document.getElementById('forecastSearchInput').oninput = (e)=>{ forecastSearch = e.target.value; renderScreen(); };
+  document.getElementById('forecastFilterSelect').onchange = (e)=>{ forecastFilter = e.target.value; renderScreen(); };
+  document.getElementById('toggleInactiveBtn').onclick = ()=>{ forecastShowInactive = !forecastShowInactive; renderScreen(); };
+  document.getElementById('addRespBtn').onclick = ()=>{
+    const val = document.getElementById('newRespInput').value.trim();
+    if(val && !responsablesList.includes(val)){ responsablesList.push(val); renderScreen(); }
+  };
+  document.getElementById('addCentroBtn').onclick = ()=>{
+    const val = document.getElementById('newCentroInput').value.trim();
+    if(val && !centrosList.includes(val)){ centrosList.push(val); renderScreen(); }
+  };
+  content.querySelectorAll('.amos-table th[data-key]').forEach(th=>{
+    th.onclick = ()=>{
+      const key = th.dataset.key;
+      if(forecastSort.key===key) forecastSort.dir *= -1;
+      else forecastSort = {key, dir:1};
+      renderScreen();
+    };
+  });
+  content.querySelectorAll('.resp-select').forEach(sel=>{
+    sel.onchange = (e)=>{
+      const v = vehicles.find(x=>x.id===parseInt(sel.dataset.vid));
+      const t = v.tasks.find(x=>x.id===parseInt(sel.dataset.tid)) || (v.appointment && {});
+      if(t) t.responsable = e.target.value;
+    };
+  });
+  content.querySelectorAll('.centro-select').forEach(sel=>{
+    sel.onchange = (e)=>{
+      const v = vehicles.find(x=>x.id===parseInt(sel.dataset.vid));
+      const t = v.tasks.find(x=>x.id===parseInt(sel.dataset.tid));
+      if(t) t.centro = e.target.value;
+    };
+  });
+  content.querySelectorAll('.mat-select').forEach(sel=>{
+    sel.onchange = (e)=>{
+      const v = vehicles.find(x=>x.id===parseInt(sel.dataset.vid));
+      const t = v.tasks.find(x=>x.id===parseInt(sel.dataset.tid));
+      if(t) t.materiales = e.target.value;
+    };
+  });
+  document.getElementById('exportExcelBtn').onclick = ()=>exportForecastToExcel(items);
+  document.getElementById('exportPdfBtn').onclick = ()=>exportForecastToPdf(items);
+}
+
+function exportForecastToExcel(items){
+  const data = items.map(it=>({
+    'Matrícula': it.v.plate,
+    'Licencia/VTC': it.v.licencia || '',
+    'Tipo de vehículo': it.v.type,
+    'Tarea': it.tarea,
+    'Materiales': it.t.tipo==='Revisión' ? MATERIALES_REVISION[it.t.materiales||'A'] : '',
+    'Fecha límite': it.t.fechaLimite ? formatDate(it.t.fechaLimite) : (it.t.kmLimite!=null ? formatKm(it.t.kmLimite) : ''),
+    'Preaviso': it.t.fechaPreaviso ? formatDate(it.t.fechaPreaviso) : '',
+    'Remanente': it.remanente.text,
+    'Responsable': it.t.responsable || '',
+    'Centro': it.t.centro || '',
+    'Estado': it.remanente.sortValue < 0 ? 'VENCIDA' : (it.remanente.sortValue <= 30 ? 'PRÓXIMA' : 'OK'),
+    'Activo': it.v.active===false ? 'NO' : 'SÍ'
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Previsión flota');
+  XLSX.writeFile(wb, `prevision_flota_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportForecastToPdf(items){
+  const rows = items.map(it=>`
+    <tr>
+      <td>${it.v.plate}</td><td>${it.v.licencia||'—'}</td><td>${it.tarea}</td>
+      <td>${it.t.fechaLimite?formatDate(it.t.fechaLimite):(it.t.kmLimite!=null?formatKm(it.t.kmLimite):'—')}</td>
+      <td>${it.t.fechaPreaviso?formatDate(it.t.fechaPreaviso):'—'}</td>
+      <td>${it.remanente.text}</td><td>${it.t.responsable||'—'}</td><td>${it.t.centro||'—'}</td>
+    </tr>`).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h2 style="font-family:sans-serif;">FLOTIA — Previsión de flota</h2>
+    <p style="font-family:sans-serif;font-size:12px;">Generado ${new Date().toLocaleDateString('es-ES')}</p>
+    <table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:11px;">
+      <thead><tr style="background:#dbe4f0;">
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Matrícula</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Licencia</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Tarea</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Fecha límite</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Preaviso</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Remanente</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Responsable</th>
+        <th style="border:1px solid #ccc;padding:5px;text-align:left;">Centro</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  window.print();
+}
+
+// ============ PANTALLA: VEHÍCULOS (buscar matrícula → tareas, o dar de alta) ============
+function toIsoDate(d){ return d.toISOString().slice(0,10); }
+
+const TASK_TIPOS = ['ITV caducidad','Seguro caducidad','Revisión','Cita programada en taller','Otros'];
+let vehiculosPlateInput = '';
+let vehiculosMode = 'lookup';   // 'lookup' | 'tasks' | 'create'
+let vehiculosFoundId = null;
+let vehiculosNewTaskOpen = false;
+let vehiculosNewTask = {tipo:'ITV caducidad', limiteType:'fecha', fechaLimite:'', fechaPreaviso:'', kmLimite:''};
+let vehiculosInactivating = false;
+let vehiculosDraft = {plate:'', type:'Taxi', licencia:'', otros:'', itv:'', seguro:'', photosByTipo:{fichaTecnica:[],permisoCirculacion:[],licenciaVtc:[],otros:[]}};
+
+function resetVehiculosDraft(plate){
+  vehiculosDraft = {plate:plate||'', type:'Taxi', licencia:'', otros:'', itv:'', seguro:'', photosByTipo:{fichaTecnica:[],permisoCirculacion:[],licenciaVtc:[],otros:[]}};
+}
+
+function renderVehiculosScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+
+  let inner = '';
+  if(vehiculosMode==='lookup'){
+    inner = `
+      <div class="section-label" style="margin-bottom:8px;">Introduce matrícula</div>
+      <datalist id="activePlatesList">
+        ${vehicles.filter(v=>v.active!==false).map(v=>`<option value="${v.plate}">`).join('')}
+      </datalist>
+      <div class="plate-lookup">
+        <input type="text" id="plateLookupInput" list="activePlatesList" placeholder="1234 ABC" value="${vehiculosPlateInput}">
+        <button id="plateLookupBtn">Continuar</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:10px;">Si la matrícula ya existe se abrirá su ficha de tareas. Si no existe, se abrirá el alta de vehículo nuevo.</div>
+    `;
+  } else if(vehiculosMode==='create'){
+    const d = vehiculosDraft;
+    const photoSlot = (key,label)=>`
+      <div class="reg-section-label" style="margin-top:12px;">${label} (${d.photosByTipo[key].length})</div>
+      <div class="photo-strip">
+        ${d.photosByTipo[key].map(p=>`<img src="${p.url}" class="photo-thumb">`).join('')}
+        <label class="photo-add" for="photo-${key}">📷</label>
+      </div>
+      <input type="file" id="photo-${key}" accept="image/*" multiple style="display:none">
+    `;
+    inner = `
+      <button class="login-back" id="backToLookup">← Cambiar matrícula</button>
+      <div class="section-label" style="margin:6px 0 8px 2px;">Nuevo vehículo — ${d.plate}</div>
+      <div class="reg-form">
+        ${photoSlot('fichaTecnica','Ficha técnica')}
+        ${photoSlot('permisoCirculacion','Permiso de circulación')}
+        ${photoSlot('licenciaVtc','Licencia / autorización VTC')}
+        ${photoSlot('otros','Otros documentos')}
+
+        <div class="form-row" style="margin-top:14px;"><label>Tipo de vehículo</label>
+          <select id="draftType">
+            ${['Taxi','VTC','Particular','Furgoneta','Camión'].map(t=>`<option ${d.type===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-row"><label>Matrícula</label><input type="text" id="draftPlate" value="${d.plate}"></div>
+        <div class="form-row"><label>Licencia o autorización VTC</label><input type="text" id="draftLicencia" value="${d.licencia}" placeholder="Nº de licencia (si aplica)"></div>
+        <div class="form-row"><label>Otros</label><input type="text" id="draftOtros" value="${d.otros}" placeholder="Notas adicionales"></div>
+        <div class="form-row"><label>Fecha de caducidad ITV</label><input type="date" id="draftItv" value="${d.itv}"></div>
+        <div class="form-row"><label>Fecha de caducidad del seguro</label><input type="date" id="draftSeguro" value="${d.seguro}"></div>
+        <button class="save-btn" id="saveDraftVehicle">Guardar vehículo</button>
+      </div>
+    `;
+  } else if(vehiculosMode==='tasks'){
+    const v = vehicles.find(x=>x.id===vehiculosFoundId);
+    const taskFormHTML = !vehiculosNewTaskOpen ? '' : `
+      <div class="reg-form">
+        <div class="form-row"><label>Tarea</label>
+          <select id="taskTipoSelect">
+            ${TASK_TIPOS.map(t=>`<option ${vehiculosNewTask.tipo===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Límite por</label>
+          <div class="radio-toggle">
+            <div class="radio-opt ${vehiculosNewTask.limiteType==='fecha'?'selected':''}" data-limite="fecha">Fecha</div>
+            <div class="radio-opt ${vehiculosNewTask.limiteType==='km'?'selected':''}" data-limite="km">Km</div>
+          </div>
+        </div>
+        ${vehiculosNewTask.limiteType==='fecha' ? `
+          <div class="form-row"><label>Fecha límite</label><input type="date" id="taskFechaLimite" value="${vehiculosNewTask.fechaLimite}"></div>
+          <div class="form-row"><label>Fecha de preaviso</label><input type="date" id="taskFechaPreaviso" value="${vehiculosNewTask.fechaPreaviso}"></div>
+        ` : `
+          <div class="form-row"><label>Km límite</label><input type="number" id="taskKmLimite" value="${vehiculosNewTask.kmLimite}" placeholder="Ej: 145000"></div>
+        `}
+        <button class="save-btn" id="saveTaskBtn">Guardar tarea</button>
+      </div>
+    `;
+    inner = `
+      <button class="login-back" id="backToLookup">← Cambiar matrícula</button>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">${plateBadge(v,'md')}<span style="font-size:13px;color:var(--muted);">${v.type}${v.licencia?' · '+v.licencia:''}</span></div>
+
+      <div class="veh-status-banner">
+        <div style="font-size:12.5px;">${v.active!==false ? '<strong style="color:var(--green);">Activo</strong>' : `<strong style="color:var(--red);">Inactivo</strong> — ${v.inactiveReason||'sin causa indicada'}`}</div>
+        <button class="toggle-inactive-btn ${v.active===false?'is-inactive':''}" id="toggleActiveBtn">${v.active!==false ? 'Marcar inactivo' : 'Reactivar'}</button>
+      </div>
+      ${vehiculosInactivating ? `
+        <div class="reg-form">
+          <div class="form-row"><label>Causa de la baja</label><input type="text" id="inactiveReasonInput" placeholder="Ej: venta, siniestro total, fin de renting..."></div>
+          <button class="save-btn" id="confirmInactiveBtn">Confirmar baja</button>
+        </div>
+      ` : ''}
+
+      <div class="section-label" style="margin:16px 0 8px 2px;">Tareas (${v.tasks.length})</div>
+      ${v.tasks.length===0 ? '<div style="color:var(--muted);font-size:12.5px;margin-bottom:10px;">Sin tareas registradas.</div>' : v.tasks.map(t=>`
+        <div class="task-row">
+          <div class="task-row-top">
+            <span class="task-tipo">${t.tipo}</span>
+            <button class="task-del" data-tid="${t.id}">✕</button>
+          </div>
+          <div class="task-meta">
+            ${t.limiteType==='km' ? `Límite: ${formatKm(t.kmLimite||0)}` : `Límite: ${t.fechaLimite?formatDate(t.fechaLimite):'—'}${t.fechaPreaviso?' · Preaviso: '+formatDate(t.fechaPreaviso):''}`}
+            ${t.responsable?' · Resp: '+t.responsable:''}${t.centro?' · '+t.centro:''}
+          </div>
+        </div>
+      `).join('')}
+      <button class="add-vehicle-btn" id="toggleTaskForm">${vehiculosNewTaskOpen?'✕ Cancelar':'+ Añadir tarea'}</button>
+      ${taskFormHTML}
+    `;
+  }
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Volver</button>
+      <div class="sub-title">Vehículos</div>
+    </div>
+    <div style="padding:16px;">${inner}</div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+
+  if(vehiculosMode==='lookup'){
+    document.getElementById('plateLookupBtn').onclick = ()=>{
+      const plate = document.getElementById('plateLookupInput').value.trim();
+      vehiculosPlateInput = plate;
+      if(!plate) return;
+      const found = vehicles.find(x=>x.plate.toLowerCase()===plate.toLowerCase());
+      if(found){ vehiculosFoundId = found.id; vehiculosMode = 'tasks'; vehiculosNewTaskOpen=false; vehiculosInactivating=false; }
+      else { resetVehiculosDraft(plate); vehiculosMode = 'create'; }
+      renderScreen();
+    };
+    document.getElementById('plateLookupInput').onkeydown = (e)=>{ if(e.key==='Enter') document.getElementById('plateLookupBtn').click(); };
+  }
+
+  if(vehiculosMode==='create'){
+    document.getElementById('backToLookup').onclick = ()=>{ vehiculosMode='lookup'; renderScreen(); };
+    ['fichaTecnica','permisoCirculacion','licenciaVtc','otros'].forEach(key=>{
+      document.getElementById(`photo-${key}`).onchange = (e)=>{
+        Array.from(e.target.files).forEach(f=>{ vehiculosDraft.photosByTipo[key].push({url:URL.createObjectURL(f), name:f.name}); });
+        renderScreen();
+      };
+    });
+    document.getElementById('saveDraftVehicle').onclick = ()=>{
+      const plate = document.getElementById('draftPlate').value.trim() || vehiculosDraft.plate || '0000 XYZ';
+      const type = document.getElementById('draftType').value;
+      const licencia = document.getElementById('draftLicencia').value.trim();
+      const otros = document.getElementById('draftOtros').value.trim();
+      const itvVal = document.getElementById('draftItv').value;
+      const seguroVal = document.getElementById('draftSeguro').value;
+      const itv = itvVal ? new Date(itvVal) : null;
+      const seguro = seguroVal ? new Date(seguroVal) : null;
+      const v = createVehicle(plate, type, licencia, otros, itv, seguro);
+      v.photosByTipo = vehiculosDraft.photosByTipo;
+      addLog(`${v.plate} → vehículo dado de alta en la flota`, 'clear');
+      vehiculosFoundId = v.id; vehiculosMode = 'tasks'; vehiculosNewTaskOpen=false;
+      renderScreen();
+    };
+  }
+
+  if(vehiculosMode==='tasks'){
+    const v = vehicles.find(x=>x.id===vehiculosFoundId);
+    document.getElementById('backToLookup').onclick = ()=>{ vehiculosMode='lookup'; vehiculosPlateInput=''; renderScreen(); };
+    document.getElementById('toggleActiveBtn').onclick = ()=>{
+      if(v.active===false){ v.active=true; v.inactiveReason=''; addLog(`${v.plate} → reactivado`, 'clear'); renderScreen(); }
+      else { vehiculosInactivating = !vehiculosInactivating; renderScreen(); }
+    };
+    const confirmBtn = document.getElementById('confirmInactiveBtn');
+    if(confirmBtn) confirmBtn.onclick = ()=>{
+      const reason = document.getElementById('inactiveReasonInput').value.trim() || 'Sin causa indicada';
+      v.active = false; v.inactiveReason = reason; vehiculosInactivating=false;
+      addLog(`${v.plate} → marcado como inactivo (${reason})`, 'fault');
+      renderScreen();
+    };
+    document.getElementById('toggleTaskForm').onclick = ()=>{
+      vehiculosNewTaskOpen = !vehiculosNewTaskOpen;
+      vehiculosNewTask = {tipo:'ITV caducidad', limiteType:'fecha', fechaLimite:'', fechaPreaviso:'', kmLimite:''};
+      renderScreen();
+    };
+    content.querySelectorAll('.task-del').forEach(btn=>{
+      btn.onclick = ()=>{ v.tasks = v.tasks.filter(t=>t.id!==parseInt(btn.dataset.tid)); renderScreen(); };
+    });
+    if(vehiculosNewTaskOpen){
+      document.getElementById('taskTipoSelect').onchange = (e)=>{ vehiculosNewTask.tipo = e.target.value; renderScreen(); };
+      content.querySelectorAll('.radio-opt[data-limite]').forEach(opt=>{
+        opt.onclick = ()=>{ vehiculosNewTask.limiteType = opt.dataset.limite; renderScreen(); };
+      });
+      document.getElementById('saveTaskBtn').onclick = ()=>{
+        const tipo = document.getElementById('taskTipoSelect').value;
+        const limiteType = vehiculosNewTask.limiteType;
+        const opts = {limiteType};
+        if(limiteType==='fecha'){
+          const fl = document.getElementById('taskFechaLimite').value;
+          const fp = document.getElementById('taskFechaPreaviso').value;
+          opts.fechaLimite = fl ? new Date(fl) : null;
+          opts.fechaPreaviso = fp ? new Date(fp) : null;
+        } else {
+          opts.kmLimite = parseInt(document.getElementById('taskKmLimite').value) || 0;
+        }
+        if(tipo==='Revisión') opts.materiales = 'A';
+        v.tasks.push(makeTask(tipo, opts));
+        addLog(`${v.plate} → tarea añadida: ${tipo}`, 'clear');
+        vehiculosNewTaskOpen = false;
+        renderScreen();
+      };
+    }
+  }
+}
+
+// ============ PANTALLA: DAÑOS (diagrama 2D) ============
+function carDiagramSVG(v){
+  const dots = v.damagePoints.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#E5342E" stroke="#fff" stroke-width="1" class="damage-dot" data-idx="${i}"/>`).join('');
+  return `
+  <svg viewBox="0 0 200 110" id="carSvg" style="width:100%;height:auto;background:#101012;border-radius:12px;border:1px solid var(--border);touch-action:none;">
+    <ellipse cx="100" cy="95" rx="70" ry="6" fill="#000" opacity="0.4"/>
+    <rect x="20" y="25" width="160" height="60" rx="20" fill="#2a2b2f" stroke="#4a4a50" stroke-width="1.5"/>
+    <rect x="62" y="16" width="76" height="34" rx="10" fill="#35363c" stroke="#4a4a50" stroke-width="1.2"/>
+    <line x1="100" y1="16" x2="100" y2="50" stroke="#4a4a50" stroke-width="1"/>
+    <circle cx="40" cy="27" r="7" fill="#0a0a0b" stroke="#4a4a50"/>
+    <circle cx="160" cy="27" r="7" fill="#0a0a0b" stroke="#4a4a50"/>
+    <circle cx="40" cy="83" r="7" fill="#0a0a0b" stroke="#4a4a50"/>
+    <circle cx="160" cy="83" r="7" fill="#0a0a0b" stroke="#4a4a50"/>
+    ${dots}
+  </svg>`;
+}
+function renderDamageScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+  const v = vehicles.find(x=>x.id===selectedId);
+  const score = Math.max(0, 100 - v.damagePoints.length*12);
+  const scoreColor = score>=70 ? 'var(--green)' : (score>=40 ? 'var(--orange)' : 'var(--red)');
+  const scoreText = score>=70 ? 'buen estado' : (score>=40 ? 'estado regular' : 'mal estado');
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Volver</button>
+      <div class="sub-title">Daños</div>
+    </div>
+    <div style="padding:16px;">
+      ${vehiclePickerHTML('damage')}
+
+      <div class="damage-score-bar"><div class="damage-score-fill" style="width:${score}%;background:${scoreColor};"></div></div>
+      <div class="damage-score-label" style="color:${scoreColor};">${score}% — ${scoreText}</div>
+
+      ${carDiagramSVG(v)}
+      <div class="damage-hint">Toca el diagrama para marcar un golpe. Toca un punto rojo para borrarlo.</div>
+      <div class="damage-list">${v.damagePoints.length===0 ? 'Sin daños registrados en este vehículo.' : `${v.damagePoints.length} golpe(s) marcado(s).`}</div>
+    </div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  wireVehiclePicker('damage');
+
+  const svg = document.getElementById('carSvg');
+  svg.addEventListener('click', (e)=>{
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+    if(e.target.classList.contains('damage-dot')){
+      const idx = parseInt(e.target.dataset.idx);
+      v.damagePoints.splice(idx,1);
+    } else {
+      v.damagePoints.push({x:Math.round(loc.x), y:Math.round(loc.y)});
+    }
+    addLog(`${v.plate} → daños actualizados (${v.damagePoints.length} marcados)`, 'fault');
+    renderScreen();
+  });
+}
+
+// ============ PANTALLA: MATERIALES (catálogo de recambios habituales) ============
+let materialFormOpen = false;
+function renderMaterialesScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+
+  const formHTML = !materialFormOpen ? '' : `
+    <div class="reg-form">
+      <div class="form-row"><label>Pieza / recambio</label><input type="text" id="matParteInput" placeholder="Ej: Filtro de aire"></div>
+      <div class="form-row"><label>Marca</label><input type="text" id="matMarcaInput" placeholder="Ej: Mann-Filter"></div>
+      <div class="form-row"><label>Referencia</label><input type="text" id="matRefInput" placeholder="Ej: C 25 114"></div>
+      <button class="save-btn" id="saveMaterialBtn">Guardar</button>
+    </div>
+  `;
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Volver</button>
+      <div class="sub-title">Materiales</div>
+    </div>
+    <div style="padding:16px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Referencias y marcas de recambios habituales, para agilizar el mantenimiento de la flota.</div>
+      <button class="add-vehicle-btn" id="toggleMaterialForm">${materialFormOpen?'✕ Cancelar':'+ Añadir material'}</button>
+      ${formHTML}
+      ${materialesCatalog.map(m=>`
+        <div class="material-row">
+          <div style="flex:1;">
+            <div class="material-part">${m.parte}</div>
+            <div class="material-detail">${m.marca} · Ref: ${m.ref}</div>
+          </div>
+          <button class="task-del" data-mid="${m.id}">✕</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  document.getElementById('toggleMaterialForm').onclick = ()=>{ materialFormOpen = !materialFormOpen; renderScreen(); };
+  if(materialFormOpen){
+    document.getElementById('saveMaterialBtn').onclick = ()=>{
+      const parte = document.getElementById('matParteInput').value.trim();
+      const marca = document.getElementById('matMarcaInput').value.trim();
+      const ref = document.getElementById('matRefInput').value.trim();
+      if(!parte) return;
+      materialesCatalog.push({id:nextMaterialId++, parte, marca:marca||'—', ref:ref||'—'});
+      materialFormOpen = false;
+      renderScreen();
+    };
+  }
+  content.querySelectorAll('.material-row .task-del').forEach(btn=>{
+    btn.onclick = ()=>{ materialesCatalog = materialesCatalog.filter(m=>m.id!==parseInt(btn.dataset.mid)); renderScreen(); };
+  });
+}
+
+// ============ Router ============
+function renderScreen(){
+  const logEl = document.getElementById('log');
+  if(logEl) logEl.style.display = (screen==='login') ? 'none' : 'flex';
+  renderHeader();
+  if(screen==='login') renderLoginScreen();
+  else if(screen==='home') renderHome();
+  else if(screen==='map') renderMapScreen();
+  else if(screen==='mantenimiento') renderMantenimientoScreen();
+  else if(screen==='forecast') renderForecastScreen();
+  else if(screen==='vehiculos') renderVehiculosScreen();
+  else if(screen==='damage') renderDamageScreen();
+  else if(screen==='materiales') renderMaterialesScreen();
+  refreshAlertPill();
+}
+
+// ---------- Acciones ----------
+function shareToWorkshop(v){
+  addLog(`${v.plate} → diagnóstico compartido con Taller Central`, 'share');
+  showToast('Compartido con el taller', `El diagnóstico de ${v.plate} (${v.dtcs.map(d=>d.code).join(', ')}) se ha enviado al taller.`);
+}
+function requestAppointment(v){
+  const horas = ['09:30', '10:15', '12:00', '16:30', '17:45'];
+  const date = new Date(Date.now() + Math.round(randRange(1,5))*86400000);
+  v.appointment = { taller: pick(TALLERES), date, hora: pick(horas) };
+  addLog(`${v.plate} → cita solicitada automáticamente en ${v.appointment.taller} (${formatDate(date)})`, 'share');
+  showToast('Cita solicitada', `${v.plate} ha pedido cita en ${v.appointment.taller} para ${formatDate(date)} a las ${v.appointment.hora}.`);
+  renderScreen();
+}
+function confirmClear(v){
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML = `<div class="modal"><h3>¿Borrar código de avería?</h3><p>Se enviará el comando de borrado (modo 04) al vehículo ${v.plate}.</p><div class="modal-buttons"><button class="btn-cancel">Cancelar</button><button class="btn-confirm">Borrar</button></div></div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.btn-cancel').onclick = ()=>overlay.remove();
+  overlay.querySelector('.btn-confirm').onclick = ()=>{
+    const codes = v.dtcs.map(d=>d.code).join(', ');
+    v.dtcs = []; v.appointment=null; overlay.remove();
+    addLog(`${v.plate} → códigos borrados remotamente (${codes})`, 'clear');
+    renderScreen();
+  };
+}
+function showToast(title,text){
+  const toast = document.createElement('div');
+  toast.className='toast';
+  toast.innerHTML = `<strong>${title}</strong>${text}`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 4200);
+}
+
+// ---------- Simulación en vivo ----------
+function tick(){
+  vehicles.forEach(v=>{
+    v.lat += randRange(-0.0009,0.0009);
+    v.lng += randRange(-0.0009,0.0009);
+    if(v.engineOff){
+      v.speed = 0;
+      v.rpm = 0;
+      v.voltage = Math.round(randRange(122,128))/10; // solo batería, motor parado
+    } else {
+      v.speed = Math.round(randRange(0,90));
+      v.rpm = Math.round(randRange(750,3200));
+      v.voltage = Math.round(randRange(133,144))/10;
+      v.estimatedKm += v.speed * (2.2*SIM_KM_TIME_ACCEL/3600);
+    }
+    v.temp = Math.round(v.temp + randRange(-0.4,0.4));
+    if(!v.engineOff && v.dtcs.length===0 && Math.random() < 0.012){
+      const dtc = pick(DTC_LIBRARY);
+      v.dtcs.push(dtc);
+      addLog(`${v.plate} → nuevo código detectado: ${dtc.code} (${dtc.desc})`, 'fault');
+    }
+  });
+  refreshMapMarkers();
+  if(screen==='map') renderMapSelectedBar();
+  if(screen==='mantenimiento') renderScreen();
+  if(screen==='home') renderHome();
+  refreshAlertPill();
+}
+
+addLog('Sesión de demo iniciada — datos simulados, sin conexión a vehículos reales.', 'info');
+renderScreen();
+setInterval(tick, 2200);
+</script>
+</body>
+</html>

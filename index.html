@@ -161,7 +161,7 @@
   .reg-section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600;margin-bottom:8px;}
   .photo-strip{display:flex;gap:8px;flex-wrap:wrap;}
   .photo-thumb{width:56px;height:56px;object-fit:cover;border-radius:4px;border:1px solid var(--border);}
-  .photo-add{width:56px;height:56px;border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);cursor:pointer;}
+  .photo-add{width:56px;height:56px;border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;text-align:center;line-height:1.2;color:var(--muted);cursor:pointer;}
   .doc-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
   .doc-row{background:var(--panel-alt);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:12px;}
   .doc-row.muted{color:var(--muted);}
@@ -903,27 +903,21 @@ function renderHome(){
 
       <div class="nav-buttons">
         <div class="nav-btn" id="goVehBtn">
-          <span class="icon">🚗</span>
           <span>Vehículos<span class="nb-sub">Buscar matrícula, tareas y alta de vehículos</span></span>
         </div>
         <div class="nav-btn" id="goMapBtn">
-          <span class="icon">🗺️</span>
           <span>Mapa flota<span class="nb-sub">Posición de toda la flota en tiempo real</span></span>
         </div>
         <div class="nav-btn" id="goForecastBtn">
-          <span class="icon">📋</span>
           <span>Previsión de flota<span class="nb-sub">Tareas, revisiones, ITV y seguros de cada coche</span></span>
         </div>
         <div class="nav-btn" id="goMaterialesBtn">
-          <span class="icon">🧰</span>
           <span>Materiales<span class="nb-sub">Referencias y marcas de recambios habituales</span></span>
         </div>
         <div class="nav-btn" id="goDamageBtn">
-          <span class="icon">💥</span>
           <span>Daños<span class="nb-sub">Diagrama 2D con golpes marcados y estado del coche</span></span>
         </div>
         <div class="nav-btn" id="goMantBtn">
-          <span class="icon">🔧</span>
           <span>Escáner<span class="nb-sub">Leer y borrar códigos, datos en tiempo real, diagnosis</span></span>
         </div>
       </div>
@@ -1014,7 +1008,7 @@ function renderAssistantPanel(v){
   }).join('<hr style="border:none;border-top:1px solid #2e3040;margin:10px 0;">');
   return `
     <div class="ai-panel">
-      <div class="ai-panel-top">🤖 Claude · Diagnóstico asistido</div>
+      <div class="ai-panel-top">CLAUDE · DIAGNÓSTICO ASISTIDO</div>
       ${blocks}
       <div class="ai-disclaimer">Orientativo, no sustituye la revisión de un mecánico. En la versión real, esto lo generaría Claude en el momento a partir de los datos del vehículo.</div>
     </div>
@@ -1327,7 +1321,7 @@ function renderForecastScreen(){
       : '—';
     return `
       <tr class="${it.v.active===false?'amos-inactive-row':''}">
-        <td><span class="plain-plate-cell">${vehTypeIcon(it.v.type)}<span class="plain-plate-text">${it.v.plate}</span></span></td>
+        <td><span class="plain-plate-cell"><span class="plain-plate-text">${it.v.plate}</span></span></td>
         <td>${it.v.licencia || '—'}</td>
         <td>${it.tarea}</td>
         <td>${materialesCell}</td>
@@ -1357,7 +1351,7 @@ function renderForecastScreen(){
       <div class="sub-title">Previsión de flota</div>
     </div>
     <div class="amos-window">
-      <div class="amos-titlebar">📋 Tabla de previsión — Tareas de flota</div>
+      <div class="amos-titlebar">TABLA DE PREVISIÓN — TAREAS DE FLOTA</div>
       <div class="amos-toolbar">
         <input type="text" id="forecastSearchInput" placeholder="Buscar por matrícula, licencia o tarea..." value="${forecastSearch}">
         <select id="forecastFilterSelect">
@@ -1401,8 +1395,8 @@ function renderForecastScreen(){
       <div class="amos-footer">
         <div class="amos-count">${items.length} tarea${items.length===1?'':'s'}</div>
         <div style="display:flex;gap:8px;">
-          <button class="amos-export-btn" id="exportExcelBtn">⬇ Excel</button>
-          <button class="amos-export-btn" id="exportPdfBtn" style="background:#1e4fa8;">⬇ PDF</button>
+          <button class="amos-export-btn" id="exportExcelBtn">Exportar a Excel</button>
+          <button class="amos-export-btn" id="exportPdfBtn" style="background:#1e4fa8;">Exportar a PDF</button>
         </div>
       </div>
     </div>
@@ -1542,7 +1536,7 @@ function renderVehiculosScreen(){
       <div class="reg-section-label" style="margin-top:12px;">${label} (${d.photosByTipo[key].length})</div>
       <div class="photo-strip">
         ${d.photosByTipo[key].map(p=>`<img src="${p.url}" class="photo-thumb">`).join('')}
-        <label class="photo-add" for="photo-${key}">📷</label>
+        <label class="photo-add" for="photo-${key}">+ Foto</label>
       </div>
       <input type="file" id="photo-${key}" accept="image/*" multiple style="display:none">
     `;

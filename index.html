@@ -137,6 +137,9 @@
   .amos-detail-wrap{padding:10px 14px;display:flex;flex-direction:column;gap:8px;}
   .amos-detail-wrap .task-row{background:#fff;}
   .refs-toggle{display:inline-block;margin-left:8px;font-size:10.5px;color:var(--orange);cursor:pointer;font-weight:600;}
+  .plate-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .plate-chip{font-family:var(--font-mono);font-size:10.5px;font-weight:700;border:1px solid #b9c6d6;border-radius:3px;padding:3px 7px;background:#fff;color:#2a3b55;cursor:pointer;}
+  .plate-chip.active{background:#1e4fa8;color:#fff;border-color:#1e4fa8;}
   .amos-table tr:nth-child(even) td{background:#f4f7fb;}
   .amos-chip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:9px;}
   .amos-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#dbe4f0;border-top:1px solid #b9c6d6;gap:8px;}
@@ -1252,6 +1255,10 @@ let forecastSort = {key:'preaviso', dir:1};
 let forecastObdMode = 'hidden'; // 'hidden' | 'active' | 'mixed'
 const OBD_MODES = ['hidden','active','mixed'];
 const OBD_MODE_LABEL = {hidden:'Eventos OBD: ocultos', active:'Eventos OBD: solo activos', mixed:'Eventos OBD: mezclados'};
+let forecastGrouped = false;            // false = una línea por evento (por defecto), true = agrupado por vehículo
+let forecastPlateFilter = new Set();    // matrículas seleccionadas como filtro (vacío = todas)
+let forecastTareaFilter = 'all';        // 'all' | tipo de tarea concreto
+let forecastExpandedTask = {};          // taskId -> bool, fila de evento desplegada (vista por evento)
 
 function preavisoSortValue(v,t){
   if(t.fechaPreaviso) return daysUntil(t.fechaPreaviso);
@@ -1306,6 +1313,62 @@ function completeTask(v, t, repite, newVals){
   forecastCompletingTaskId = null;
 }
 
+function taskDetailHTML(v, it){
+  const t = it.t;
+  if(t.isObd){
+    return `
+      <div class="task-meta">${v.dtcs.map(d=>`${d.code} — ${d.desc}`).join(' · ')}</div>
+      <button class="toggle-inactive-btn" style="margin-top:8px;" data-goto-scanner="${v.id}">Ir al escáner</button>
+    `;
+  }
+  const refsOpen = !!forecastExpandedRefs[t.id];
+  const completing = forecastCompletingTaskId===t.id;
+  const form = forecastCompleteForm;
+  return `
+    <div class="task-meta">
+      ${t.limiteType==='km' ? `Límite: ${formatKm(t.kmLimite||0)}` : `Límite: ${t.fechaLimite?formatDate(t.fechaLimite):'—'}${t.fechaPreaviso?' · Preaviso: '+formatDate(t.fechaPreaviso):''}`}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+      <select class="resp-select" data-vid="${v.id}" data-tid="${t.id}">
+        <option value="">Responsable: —</option>
+        ${responsablesList.map(r=>`<option value="${r}" ${t.responsable===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+      <select class="centro-select" data-vid="${v.id}" data-tid="${t.id}">
+        <option value="">Centro: —</option>
+        ${centrosList.map(c=>`<option value="${c}" ${t.centro===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+    </div>
+    ${t.tipo==='Revisión' ? `
+      <div style="margin-top:6px;">
+        <select class="mat-select" data-vid="${v.id}" data-tid="${t.id}">
+          <option value="A" ${t.materiales==='A'?'selected':''}>${MATERIALES_REVISION.A}</option>
+          <option value="B" ${t.materiales==='B'?'selected':''}>${MATERIALES_REVISION.B}</option>
+        </select>
+        <span class="refs-toggle" data-tid="${t.id}">${refsOpen?'▾ Ocultar referencias':'▸ Ver referencias'}</span>
+        ${refsOpen ? `<div class="mat-refs">${revisionParts(t.materiales||'A').map(p=>`<div>${p}: ${materialRefFor(v,p)}</div>`).join('')}</div>` : ''}
+      </div>
+    ` : ''}
+    <button class="toggle-inactive-btn" style="margin-top:8px;" data-complete-tid="${t.id}">Evento realizado</button>
+    ${completing ? `
+      <div class="reg-form" style="margin-top:8px;">
+        <div class="form-row"><label>¿Es un evento repetitivo?</label>
+          <div class="radio-toggle">
+            <div class="radio-opt ${form.repite===true?'selected':''}" data-repite="si">Sí</div>
+            <div class="radio-opt ${form.repite===false?'selected':''}" data-repite="no">No</div>
+          </div>
+        </div>
+        ${form.repite===true ? (t.limiteType==='km' ? `
+          <div class="form-row"><label>Próximo km límite</label><input type="number" id="completeKmInput" value="${form.kmLimite}" placeholder="Ej: 160000"></div>
+        ` : `
+          <div class="form-row"><label>Fecha límite del próximo evento</label><input type="date" id="completeFechaLimite" value="${form.fechaLimite}"></div>
+          <div class="form-row"><label>Fecha de preaviso</label><input type="date" id="completeFechaPreaviso" value="${form.fechaPreaviso}"></div>
+        `) : ''}
+        ${form.repite!==null ? `<button class="save-btn" id="confirmCompleteBtn">Confirmar</button>` : ''}
+      </div>
+    ` : ''}
+  `;
+}
+
 function renderForecastScreen(){
   const content = document.getElementById('content');
   content.classList.add('no-pad');
@@ -1324,121 +1387,116 @@ function renderForecastScreen(){
   // filtro por estado (no aplica a eventos OBD, que son siempre urgentes)
   if(forecastFilter==='overdue') items = items.filter(it => it.t.isObd || it.remanente.sortValue < 0);
   if(forecastFilter==='soon') items = items.filter(it => it.t.isObd || (it.remanente.sortValue >= 0 && it.remanente.sortValue <= 30));
-
-  // agrupar por vehículo — una sola línea por coche
-  const groupsMap = new Map();
-  items.forEach(it=>{
-    if(!groupsMap.has(it.v.id)) groupsMap.set(it.v.id, {v:it.v, items:[]});
-    groupsMap.get(it.v.id).items.push(it);
-  });
-  let groups = Array.from(groupsMap.values()).map(g=>{
-    const worst = g.items.reduce((a,b)=> a.remanente.sortValue <= b.remanente.sortValue ? a : b);
-    const worstPreaviso = Math.min(...g.items.map(it=>it.preaviso));
-    return Object.assign(g, {worst, worstPreaviso});
-  });
-
-  // orden (por defecto: preaviso más urgente primero)
-  groups.sort((a,b)=>{
-    let av, bv;
-    if(forecastSort.key==='plate'){ av=a.v.plate; bv=b.v.plate; }
-    else if(forecastSort.key==='licencia'){ av=a.v.licencia||''; bv=b.v.licencia||''; }
-    else if(forecastSort.key==='remanente'){ av=a.worst.remanente.sortValue; bv=b.worst.remanente.sortValue; }
-    else { av=a.worstPreaviso; bv=b.worstPreaviso; }
-    if(av<bv) return -1*forecastSort.dir;
-    if(av>bv) return 1*forecastSort.dir;
-    return 0;
-  });
+  // filtro por matrícula (chips)
+  if(forecastPlateFilter.size>0) items = items.filter(it => forecastPlateFilter.has(it.v.plate));
+  // filtro por tipo de tarea
+  if(forecastTareaFilter!=='all') items = items.filter(it => it.t.tipo===forecastTareaFilter);
 
   function arrow(key){ return forecastSort.key===key ? `<span class="arrow">${forecastSort.dir===1?'▲':'▼'}</span>` : ''; }
 
-  const rows = groups.map(g=>{
-    const v = g.v;
-    const info = g.worst.remanente.info;
-    const expanded = !!forecastExpandedVeh[v.id];
-    const mainRow = `
-      <tr class="amos-veh-row ${v.active===false?'amos-inactive-row':''}" data-vid="${v.id}">
-        <td><span class="row-expand">${expanded?'▾':'▸'}</span><span class="plain-plate-cell"><span class="plain-plate-text">${v.plate}</span></span></td>
-        <td>${v.licencia || '—'}</td>
-        <td>${g.items.length} tarea${g.items.length===1?'':'s'} · más urgente: ${g.worst.tarea}</td>
-        <td style="color:${info.color};font-weight:700;">${g.worst.remanente.text}</td>
-        <td><span class="amos-chip" style="color:${info.color};background:${info.color}22;border:1px solid ${info.color}55;">${info.label}</span></td>
-      </tr>
-    `;
-    if(!expanded) return mainRow;
+  let rows, theadHTML, colspan, footCount;
 
-    const detailRows = g.items.map(it=>{
-      const t = it.t;
-      const tinfo = it.remanente.info;
-
-      if(t.isObd){
+  if(forecastGrouped){
+    // vista agrupada: una línea por vehículo, con sus eventos desplegables
+    const groupsMap = new Map();
+    items.forEach(it=>{
+      if(!groupsMap.has(it.v.id)) groupsMap.set(it.v.id, {v:it.v, items:[]});
+      groupsMap.get(it.v.id).items.push(it);
+    });
+    let groups = Array.from(groupsMap.values()).map(g=>{
+      const worst = g.items.reduce((a,b)=> a.remanente.sortValue <= b.remanente.sortValue ? a : b);
+      const worstPreaviso = Math.min(...g.items.map(it=>it.preaviso));
+      return Object.assign(g, {worst, worstPreaviso});
+    });
+    groups.sort((a,b)=>{
+      let av, bv;
+      if(forecastSort.key==='plate'){ av=a.v.plate; bv=b.v.plate; }
+      else if(forecastSort.key==='licencia'){ av=a.v.licencia||''; bv=b.v.licencia||''; }
+      else if(forecastSort.key==='remanente'){ av=a.worst.remanente.sortValue; bv=b.worst.remanente.sortValue; }
+      else { av=a.worstPreaviso; bv=b.worstPreaviso; }
+      if(av<bv) return -1*forecastSort.dir;
+      if(av>bv) return 1*forecastSort.dir;
+      return 0;
+    });
+    colspan = 5;
+    theadHTML = `<tr>
+      <th data-key="plate">Matrícula${arrow('plate')}</th>
+      <th data-key="licencia">Licencia/VTC${arrow('licencia')}</th>
+      <th>Eventos</th>
+      <th data-key="remanente">Remanente más urgente${arrow('remanente')}</th>
+      <th>Estado</th>
+    </tr>`;
+    rows = groups.map(g=>{
+      const v = g.v;
+      const info = g.worst.remanente.info;
+      const expanded = !!forecastExpandedVeh[v.id];
+      const mainRow = `
+        <tr class="amos-veh-row ${v.active===false?'amos-inactive-row':''}" data-vid="${v.id}">
+          <td><span class="row-expand">${expanded?'▾':'▸'}</span><span class="plain-plate-cell"><span class="plain-plate-text">${v.plate}</span></span></td>
+          <td>${v.licencia || '—'}</td>
+          <td>${g.items.length} evento${g.items.length===1?'':'s'} · más urgente: ${g.worst.tarea}</td>
+          <td style="color:${info.color};font-weight:700;">${g.worst.remanente.text}</td>
+          <td><span class="amos-chip" style="color:${info.color};background:${info.color}22;border:1px solid ${info.color}55;">${info.label}</span></td>
+        </tr>
+      `;
+      if(!expanded) return mainRow;
+      const detailRows = g.items.map(it=>{
+        const tinfo = it.remanente.info;
         return `
           <div class="task-row">
             <div class="task-row-top">
               <span class="task-tipo">${it.tarea}</span>
-              <span style="color:${tinfo.color};font-weight:700;font-size:12px;">${tinfo.label}</span>
+              <span style="color:${tinfo.color};font-weight:700;font-size:12px;">${it.t.isObd?tinfo.label:it.remanente.text}</span>
             </div>
-            <div class="task-meta">${v.dtcs.map(d=>`${d.code} — ${d.desc}`).join(' · ')}</div>
-            <button class="toggle-inactive-btn" style="margin-top:8px;" data-goto-scanner="${v.id}">Ir al escáner</button>
+            ${taskDetailHTML(v, it)}
           </div>
         `;
-      }
-
-      const refsOpen = !!forecastExpandedRefs[t.id];
-      const completing = forecastCompletingTaskId===t.id;
-      const form = forecastCompleteForm;
-      return `
-        <div class="task-row">
-          <div class="task-row-top">
-            <span class="task-tipo">${it.tarea}</span>
-            <span style="color:${tinfo.color};font-weight:700;font-size:12px;">${it.remanente.text}</span>
-          </div>
-          <div class="task-meta">
-            ${t.limiteType==='km' ? `Límite: ${formatKm(t.kmLimite||0)}` : `Límite: ${t.fechaLimite?formatDate(t.fechaLimite):'—'}${t.fechaPreaviso?' · Preaviso: '+formatDate(t.fechaPreaviso):''}`}
-          </div>
-          <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
-            <select class="resp-select" data-vid="${v.id}" data-tid="${t.id}">
-              <option value="">Responsable: —</option>
-              ${responsablesList.map(r=>`<option value="${r}" ${t.responsable===r?'selected':''}>${r}</option>`).join('')}
-            </select>
-            <select class="centro-select" data-vid="${v.id}" data-tid="${t.id}">
-              <option value="">Centro: —</option>
-              ${centrosList.map(c=>`<option value="${c}" ${t.centro===c?'selected':''}>${c}</option>`).join('')}
-            </select>
-          </div>
-          ${t.tipo==='Revisión' ? `
-            <div style="margin-top:6px;">
-              <select class="mat-select" data-vid="${v.id}" data-tid="${t.id}">
-                <option value="A" ${t.materiales==='A'?'selected':''}>${MATERIALES_REVISION.A}</option>
-                <option value="B" ${t.materiales==='B'?'selected':''}>${MATERIALES_REVISION.B}</option>
-              </select>
-              <span class="refs-toggle" data-tid="${t.id}">${refsOpen?'▾ Ocultar referencias':'▸ Ver referencias'}</span>
-              ${refsOpen ? `<div class="mat-refs">${revisionParts(t.materiales||'A').map(p=>`<div>${p}: ${materialRefFor(v,p)}</div>`).join('')}</div>` : ''}
-            </div>
-          ` : ''}
-          <button class="toggle-inactive-btn" style="margin-top:8px;" data-complete-tid="${t.id}">Evento realizado</button>
-          ${completing ? `
-            <div class="reg-form" style="margin-top:8px;">
-              <div class="form-row"><label>¿Es un evento repetitivo?</label>
-                <div class="radio-toggle">
-                  <div class="radio-opt ${form.repite===true?'selected':''}" data-repite="si">Sí</div>
-                  <div class="radio-opt ${form.repite===false?'selected':''}" data-repite="no">No</div>
-                </div>
-              </div>
-              ${form.repite===true ? (t.limiteType==='km' ? `
-                <div class="form-row"><label>Próximo km límite</label><input type="number" id="completeKmInput" value="${form.kmLimite}" placeholder="Ej: 160000"></div>
-              ` : `
-                <div class="form-row"><label>Fecha límite del próximo evento</label><input type="date" id="completeFechaLimite" value="${form.fechaLimite}"></div>
-                <div class="form-row"><label>Fecha de preaviso</label><input type="date" id="completeFechaPreaviso" value="${form.fechaPreaviso}"></div>
-              `) : ''}
-              ${form.repite!==null ? `<button class="save-btn" id="confirmCompleteBtn">Confirmar</button>` : ''}
-            </div>
-          ` : ''}
-        </div>
-      `;
+      }).join('');
+      return mainRow + `<tr class="amos-detail-row"><td colspan="5"><div class="amos-detail-wrap">${detailRows}</div></td></tr>`;
     }).join('');
+    footCount = `${groups.length} vehículo${groups.length===1?'':'s'} · ${items.length} evento${items.length===1?'':'s'}`;
+  } else {
+    // vista por evento (por defecto): una línea por avería/tarea, sin agrupar
+    items.sort((a,b)=>{
+      let av, bv;
+      if(forecastSort.key==='plate'){ av=a.v.plate; bv=b.v.plate; }
+      else if(forecastSort.key==='licencia'){ av=a.v.licencia||''; bv=b.v.licencia||''; }
+      else if(forecastSort.key==='remanente'){ av=a.remanente.sortValue; bv=b.remanente.sortValue; }
+      else { av=a.preaviso; bv=b.preaviso; }
+      if(av<bv) return -1*forecastSort.dir;
+      if(av>bv) return 1*forecastSort.dir;
+      return 0;
+    });
+    colspan = 6;
+    theadHTML = `<tr>
+      <th data-key="plate">Matrícula${arrow('plate')}</th>
+      <th data-key="licencia">Licencia/VTC${arrow('licencia')}</th>
+      <th>Evento</th>
+      <th>Vence</th>
+      <th data-key="remanente">Remanente${arrow('remanente')}</th>
+      <th>Estado</th>
+    </tr>`;
+    rows = items.map(it=>{
+      const v = it.v, t = it.t;
+      const info = it.remanente.info;
+      const expanded = !!forecastExpandedTask[t.id];
+      const mainRow = `
+        <tr class="amos-veh-row ${v.active===false?'amos-inactive-row':''}" data-tid2="${t.id}">
+          <td><span class="row-expand">${expanded?'▾':'▸'}</span><span class="plain-plate-cell"><span class="plain-plate-text">${v.plate}</span></span></td>
+          <td>${v.licencia || '—'}</td>
+          <td>${it.tarea}</td>
+          <td>${t.fechaLimite ? formatDate(t.fechaLimite) : (t.kmLimite!=null ? formatKm(t.kmLimite) : '—')}</td>
+          <td style="color:${info.color};font-weight:700;">${it.remanente.text}</td>
+          <td><span class="amos-chip" style="color:${info.color};background:${info.color}22;border:1px solid ${info.color}55;">${info.label}</span></td>
+        </tr>
+      `;
+      if(!expanded) return mainRow;
+      return mainRow + `<tr class="amos-detail-row"><td colspan="6"><div class="amos-detail-wrap"><div class="task-row">${taskDetailHTML(v, it)}</div></div></td></tr>`;
+    }).join('');
+    footCount = `${items.length} evento${items.length===1?'':'s'}`;
+  }
 
-    return mainRow + `<tr class="amos-detail-row"><td colspan="5"><div class="amos-detail-wrap">${detailRows}</div></td></tr>`;
-  }).join('');
+  const plateChips = vehicles.map(v=>`<span class="plate-chip ${forecastPlateFilter.has(v.plate)?'active':''}" data-plate="${v.plate}">${v.plate}</span>`).join('');
 
   content.innerHTML = `
     <div class="sub-header">
@@ -1446,7 +1504,7 @@ function renderForecastScreen(){
       <div class="sub-title">Previsión de flota</div>
     </div>
     <div class="amos-window">
-      <div class="amos-titlebar">TABLA DE PREVISIÓN — TAREAS DE FLOTA</div>
+      <div class="amos-titlebar">TABLA DE PREVISIÓN — EVENTOS DE FLOTA</div>
       <div class="amos-toolbar">
         <input type="text" id="forecastSearchInput" placeholder="Buscar por matrícula, licencia o tarea..." value="${forecastSearch}">
         <select id="forecastFilterSelect">
@@ -1454,8 +1512,22 @@ function renderForecastScreen(){
           <option value="overdue" ${forecastFilter==='overdue'?'selected':''}>Vencidas</option>
           <option value="soon" ${forecastFilter==='soon'?'selected':''}>Próximas 30 días</option>
         </select>
+        <select id="forecastTareaSelect">
+          <option value="all" ${forecastTareaFilter==='all'?'selected':''}>Todos los tipos</option>
+          ${TASK_TIPOS.map(tp=>`<option value="${tp}" ${forecastTareaFilter===tp?'selected':''}>${tp}</option>`).join('')}
+          <option value="Cita" ${forecastTareaFilter==='Cita'?'selected':''}>Cita</option>
+          <option value="OBD" ${forecastTareaFilter==='OBD'?'selected':''}>OBD</option>
+        </select>
+      </div>
+      <div class="amos-toolbar">
         <button class="toggle-inactive-btn ${forecastShowInactive?'is-inactive':''}" id="toggleInactiveBtn">${forecastShowInactive?'Ocultar inactivos':'Mostrar inactivos'}</button>
         <button class="toggle-inactive-btn ${forecastObdMode!=='hidden'?'is-inactive':''}" id="toggleObdBtn">${OBD_MODE_LABEL[forecastObdMode]}</button>
+        <button class="toggle-inactive-btn ${forecastGrouped?'is-inactive':''}" id="toggleGroupBtn">${forecastGrouped?'Vista: por vehículo':'Vista: por evento'}</button>
+        <button class="toggle-inactive-btn" id="clearFiltersBtn">Limpiar filtros</button>
+      </div>
+      <div class="amos-toolbar" style="flex-direction:column;align-items:stretch;">
+        <div style="font-size:9.5px;color:#41547a;margin-bottom:5px;">Filtrar por matrícula</div>
+        <div class="plate-chip-row">${plateChips}</div>
       </div>
       <div class="amos-toolbar" style="flex-direction:column;align-items:stretch;">
         <div style="display:flex;gap:8px;">
@@ -1471,20 +1543,12 @@ function renderForecastScreen(){
       </div>
       <div class="amos-table-wrap">
         <table class="amos-table">
-          <thead>
-            <tr>
-              <th data-key="plate">Matrícula${arrow('plate')}</th>
-              <th data-key="licencia">Licencia/VTC${arrow('licencia')}</th>
-              <th>Tareas</th>
-              <th data-key="remanente">Remanente más urgente${arrow('remanente')}</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>${rows || `<tr><td colspan="5" style="text-align:center;color:#7a8aa5;padding:18px;">Sin resultados</td></tr>`}</tbody>
+          <thead>${theadHTML}</thead>
+          <tbody>${rows || `<tr><td colspan="${colspan}" style="text-align:center;color:#7a8aa5;padding:18px;">Sin resultados</td></tr>`}</tbody>
         </table>
       </div>
       <div class="amos-footer">
-        <div class="amos-count">${groups.length} vehículo${groups.length===1?'':'s'} · ${items.length} tarea${items.length===1?'':'s'}</div>
+        <div class="amos-count">${footCount}</div>
         <div style="display:flex;gap:8px;">
           <button class="amos-export-btn" id="exportExcelBtn">Exportar a Excel</button>
           <button class="amos-export-btn" id="exportPdfBtn" style="background:#1e4fa8;">Exportar a PDF</button>
@@ -1497,12 +1561,25 @@ function renderForecastScreen(){
   document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
   document.getElementById('forecastSearchInput').oninput = (e)=>{ forecastSearch = e.target.value; renderScreen(); };
   document.getElementById('forecastFilterSelect').onchange = (e)=>{ forecastFilter = e.target.value; renderScreen(); };
+  document.getElementById('forecastTareaSelect').onchange = (e)=>{ forecastTareaFilter = e.target.value; renderScreen(); };
   document.getElementById('toggleInactiveBtn').onclick = ()=>{ forecastShowInactive = !forecastShowInactive; renderScreen(); };
   document.getElementById('toggleObdBtn').onclick = ()=>{
     const idx = OBD_MODES.indexOf(forecastObdMode);
     forecastObdMode = OBD_MODES[(idx+1) % OBD_MODES.length];
     renderScreen();
   };
+  document.getElementById('toggleGroupBtn').onclick = ()=>{ forecastGrouped = !forecastGrouped; renderScreen(); };
+  document.getElementById('clearFiltersBtn').onclick = ()=>{
+    forecastSearch=''; forecastFilter='all'; forecastTareaFilter='all'; forecastPlateFilter=new Set(); forecastShowInactive=false;
+    renderScreen();
+  };
+  content.querySelectorAll('.plate-chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      const p = chip.dataset.plate;
+      if(forecastPlateFilter.has(p)) forecastPlateFilter.delete(p); else forecastPlateFilter.add(p);
+      renderScreen();
+    };
+  });
   content.querySelectorAll('[data-goto-scanner]').forEach(btn=>{
     btn.onclick = (e)=>{
       e.stopPropagation();
@@ -1527,10 +1604,19 @@ function renderForecastScreen(){
       renderScreen();
     };
   });
-  content.querySelectorAll('.amos-veh-row').forEach(row=>{
+  content.querySelectorAll('.amos-veh-row[data-vid]').forEach(row=>{
     row.onclick = ()=>{
       const vid = parseInt(row.dataset.vid);
       forecastExpandedVeh[vid] = !forecastExpandedVeh[vid];
+      forecastCompletingTaskId = null;
+      renderScreen();
+    };
+  });
+  content.querySelectorAll('.amos-veh-row[data-tid2]').forEach(row=>{
+    row.onclick = ()=>{
+      const tid = row.dataset.tid2;
+      const key = /^\d+$/.test(tid) ? parseInt(tid) : tid;
+      forecastExpandedTask[key] = !forecastExpandedTask[key];
       forecastCompletingTaskId = null;
       renderScreen();
     };
@@ -1586,8 +1672,8 @@ function renderForecastScreen(){
   if(confirmBtn){
     confirmBtn.onclick = (e)=>{
       e.stopPropagation();
-      const t = items.map(it=>it.t).find(x=>x.id===forecastCompletingTaskId);
-      const v = items.find(it=>it.t.id===forecastCompletingTaskId).v;
+      const found = items.find(it=>it.t.id===forecastCompletingTaskId);
+      const t = found.t, v = found.v;
       const form = forecastCompleteForm;
       const newVals = {};
       if(form.repite){

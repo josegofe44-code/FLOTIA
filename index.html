@@ -122,6 +122,15 @@
   /* ---- Previsión de flota — ventana estilo tabla AMOS ---- */
   .amos-window{background:#eef2f8;border-radius:6px;overflow:hidden;border:1px solid #b9c6d6;margin:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
   .amos-titlebar{background:#1e4fa8;color:#fff;padding:10px 14px;font-size:12.5px;font-weight:700;letter-spacing:0.3px;display:flex;align-items:center;gap:8px;}
+  .filter-titlebar{background:#c0392b;color:#fff;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-align:center;}
+  .filter-bar{display:flex;background:#eef2f8;padding:8px 6px;border-bottom:1px solid #b9c6d6;overflow-x:auto;gap:0;}
+  .filter-group{display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 12px;border-right:1px solid #c3cedd;flex:0 0 auto;}
+  .filter-group-label{font-size:8.5px;font-weight:700;color:#41547a;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
+  .filter-group-or{font-size:7.5px;color:#9aa5b8;font-style:italic;border-bottom:1px solid #c3cedd;padding:0 10px 2px;margin-bottom:1px;}
+  .filter-chip-row{display:flex;gap:4px;flex-wrap:nowrap;justify-content:center;}
+  .filter-chip{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 6px;border-radius:4px;background:var(--chip-color);color:#fff;font-size:9px;font-weight:800;letter-spacing:0.2px;cursor:pointer;border:1px solid rgba(0,0,0,0.15);white-space:nowrap;}
+  .filter-chip.off{background:#e4e8ee;color:#9aa5b8;border-color:#d5dae2;}
+  .filter-search-input{width:100%;border:1px solid #c3cedd;border-radius:4px;padding:5px 7px;font-size:11px;font-family:var(--font-display);}
   .amos-toolbar{padding:9px 10px;background:#dbe4f0;border-bottom:1px solid #b9c6d6;display:flex;gap:8px;flex-wrap:wrap;}
   .amos-toolbar input, .amos-toolbar select{border:1px solid #9fb0c6;border-radius:5px;padding:6px 8px;font-size:12px;background:#fff;color:#1a2b45;font-family:var(--font-display);}
   .amos-toolbar input{flex:1;min-width:120px;}
@@ -137,9 +146,19 @@
   .amos-detail-wrap{padding:10px 14px;display:flex;flex-direction:column;gap:8px;}
   .amos-detail-wrap .task-row{background:#fff;}
   .refs-toggle{display:inline-block;margin-left:8px;font-size:10.5px;color:var(--orange);cursor:pointer;font-weight:600;}
-  .plate-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
-  .plate-chip{font-family:var(--font-mono);font-size:10.5px;font-weight:700;border:1px solid #b9c6d6;border-radius:3px;padding:3px 7px;background:#fff;color:#2a3b55;cursor:pointer;}
-  .plate-chip.active{background:#1e4fa8;color:#fff;border-color:#1e4fa8;}
+  .col-head-row{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+  .col-filter-btn{font-size:9px;color:#5a6b85;cursor:pointer;padding:1px 3px;}
+  .col-filter-btn.active{color:#fff;background:#1e4fa8;border-radius:2px;}
+  .colfilter-panel{background:#fff;border-bottom:1px solid #b9c6d6;padding:10px;}
+  .colfilter-head{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:#1a2b45;margin-bottom:6px;}
+  .colfilter-close{font-size:10px;color:var(--red);cursor:pointer;font-weight:600;}
+  .colfilter-search{width:100%;border:1px solid #c3cedd;border-radius:4px;padding:6px 8px;font-size:11.5px;font-family:var(--font-display);margin-bottom:6px;}
+  .colfilter-quickrow{display:flex;gap:12px;margin-bottom:6px;}
+  .colfilter-quickbtn{font-size:10.5px;color:#1e4fa8;font-weight:700;cursor:pointer;}
+  .colfilter-list{max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+  .colfilter-item{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#2a3b55;padding:2px 0;}
+  .colfilter-item label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .colfilter-only{font-size:9.5px;color:#8a97ad;cursor:pointer;white-space:nowrap;text-decoration:underline;}
   .amos-table tr:nth-child(even) td{background:#f4f7fb;}
   .amos-chip{font-size:9px;font-weight:700;padding:2px 7px;border-radius:9px;}
   .amos-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#dbe4f0;border-top:1px solid #b9c6d6;gap:8px;}
@@ -1249,16 +1268,61 @@ const MATERIALES_REVISION = {
   B: 'Aceite + 4 filtros'
 };
 let forecastSearch = '';
-let forecastFilter = 'all'; // 'all' | 'overdue' | 'soon'
 let forecastShowInactive = false;
 let forecastSort = {key:'preaviso', dir:1};
 let forecastObdMode = 'hidden'; // 'hidden' | 'active' | 'mixed'
 const OBD_MODES = ['hidden','active','mixed'];
 const OBD_MODE_LABEL = {hidden:'Eventos OBD: ocultos', active:'Eventos OBD: solo activos', mixed:'Eventos OBD: mezclados'};
 let forecastGrouped = false;            // false = una línea por evento (por defecto), true = agrupado por vehículo
-let forecastPlateFilter = new Set();    // matrículas seleccionadas como filtro (vacío = todas)
-let forecastTareaFilter = 'all';        // 'all' | tipo de tarea concreto
-let forecastExpandedTask = {};          // taskId -> bool, fila de evento desplegada (vista por evento)
+let forecastExpandedTask = {};          // taskId -> bool, formulario de "evento realizado" visible
+let forecastHorizon = 'all';            // '7' | '15' | '30' | '90' | 'all' (infinito) — plazo temporal de los eventos a mostrar
+const HORIZON_CHIPS = [
+  {val:'7', label:'7D'},
+  {val:'15', label:'15D'},
+  {val:'30', label:'30D'},
+  {val:'90', label:'90D'},
+  {val:'all', label:'TODO'},
+];
+
+// ---- Filtros tipo Excel por columna: forecastColFilters[col] = Set de valores EXCLUIDOS (vacío = sin filtro) ----
+let forecastColFilters = {plate:new Set(), licencia:new Set(), tarea:new Set(), responsable:new Set(), centro:new Set(), estado:new Set()};
+let forecastOpenColFilter = null; // qué columna tiene el panel de filtro abierto
+let forecastColFilterSearch = ''; // texto para buscar dentro del panel de filtro abierto
+const COL_LABELS = {plate:'Matrícula', licencia:'Licencia/VTC', tarea:'Evento', responsable:'Responsable', centro:'Centro', estado:'Estado'};
+const TAREA_CHIPS = [
+  {val:'ITV caducidad', label:'ITV', color:'#0A6ED1'},
+  {val:'Seguro caducidad', label:'SEG', color:'#0E7D3C'},
+  {val:'Revisión', label:'REV', color:'#E9730C'},
+  {val:'Cita programada en taller', label:'CITA', color:'#7B4FA6'},
+  {val:'Otros', label:'OTR', color:'#6B7280'},
+  {val:'OBD', label:'OBD', color:'#B00020'},
+];
+const ESTADO_CHIPS = [
+  {val:'Vencida', label:'VEN', color:'#B00020'},
+  {val:'Próxima', label:'PRÓX', color:'#E9730C'},
+  {val:'OK', label:'OK', color:'#0E7D3C'},
+  {val:'Avería activa', label:'AVER', color:'#B00020'},
+];
+function filterChip(col, value, label, color){
+  const off = forecastColFilters[col].has(value);
+  return `<span class="filter-chip ${off?'off':''}" data-chipcol="${col}" data-chipval="${value}" style="--chip-color:${color};">${label}</span>`;
+}
+function estadoCategoria(it){
+  if(it.t.isObd) return 'Avería activa';
+  const sv = it.remanente.sortValue;
+  if(sv<0) return 'Vencida';
+  if(sv<=30) return 'Próxima';
+  return 'OK';
+}
+function colValue(it, col){
+  if(col==='plate') return it.v.plate;
+  if(col==='licencia') return it.v.licencia || '—';
+  if(col==='tarea') return it.t.tipo;
+  if(col==='responsable') return it.t.responsable || '—';
+  if(col==='centro') return it.t.centro || '—';
+  if(col==='estado') return estadoCategoria(it);
+  return '';
+}
 
 function preavisoSortValue(v,t){
   if(t.fechaPreaviso) return daysUntil(t.fechaPreaviso);
@@ -1322,8 +1386,6 @@ function taskDetailHTML(v, it){
     `;
   }
   const refsOpen = !!forecastExpandedRefs[t.id];
-  const completing = forecastCompletingTaskId===t.id;
-  const form = forecastCompleteForm;
   return `
     <div class="task-meta">
       ${t.limiteType==='km' ? `Límite: ${formatKm(t.kmLimite||0)}` : `Límite: ${t.fechaLimite?formatDate(t.fechaLimite):'—'}${t.fechaPreaviso?' · Preaviso: '+formatDate(t.fechaPreaviso):''}`}
@@ -1349,48 +1411,66 @@ function taskDetailHTML(v, it){
       </div>
     ` : ''}
     <button class="toggle-inactive-btn" style="margin-top:8px;" data-complete-tid="${t.id}">Evento realizado</button>
-    ${completing ? `
-      <div class="reg-form" style="margin-top:8px;">
-        <div class="form-row"><label>¿Es un evento repetitivo?</label>
-          <div class="radio-toggle">
-            <div class="radio-opt ${form.repite===true?'selected':''}" data-repite="si">Sí</div>
-            <div class="radio-opt ${form.repite===false?'selected':''}" data-repite="no">No</div>
-          </div>
-        </div>
-        ${form.repite===true ? (t.limiteType==='km' ? `
-          <div class="form-row"><label>Próximo km límite</label><input type="number" id="completeKmInput" value="${form.kmLimite}" placeholder="Ej: 160000"></div>
-        ` : `
-          <div class="form-row"><label>Fecha límite del próximo evento</label><input type="date" id="completeFechaLimite" value="${form.fechaLimite}"></div>
-          <div class="form-row"><label>Fecha de preaviso</label><input type="date" id="completeFechaPreaviso" value="${form.fechaPreaviso}"></div>
-        `) : ''}
-        ${form.repite!==null ? `<button class="save-btn" id="confirmCompleteBtn">Confirmar</button>` : ''}
-      </div>
-    ` : ''}
+    ${completionFormHTML(t)}
   `;
+}
+function completionFormHTML(t){
+  if(forecastCompletingTaskId!==t.id) return '';
+  const form = forecastCompleteForm;
+  return `
+    <div class="reg-form" style="margin-top:8px;">
+      <div class="form-row"><label>¿Es un evento repetitivo?</label>
+        <div class="radio-toggle">
+          <div class="radio-opt ${form.repite===true?'selected':''}" data-repite="si">Sí</div>
+          <div class="radio-opt ${form.repite===false?'selected':''}" data-repite="no">No</div>
+        </div>
+      </div>
+      ${form.repite===true ? (t.limiteType==='km' ? `
+        <div class="form-row"><label>Próximo km límite</label><input type="number" id="completeKmInput" value="${form.kmLimite}" placeholder="Ej: 160000"></div>
+      ` : `
+        <div class="form-row"><label>Fecha límite del próximo evento</label><input type="date" id="completeFechaLimite" value="${form.fechaLimite}"></div>
+        <div class="form-row"><label>Fecha de preaviso</label><input type="date" id="completeFechaPreaviso" value="${form.fechaPreaviso}"></div>
+      `) : ''}
+      ${form.repite!==null ? `<button class="save-btn" id="confirmCompleteBtn">Confirmar</button>` : ''}
+    </div>
+  `;
+}
+
+function colFilterIcon(col){
+  const active = forecastColFilters[col] && forecastColFilters[col].size>0;
+  return `<span class="col-filter-btn ${active?'active':''}" data-col="${col}">▾</span>`;
 }
 
 function renderForecastScreen(){
   const content = document.getElementById('content');
   content.classList.add('no-pad');
 
-  let items = forecastObdMode==='active' ? [] : buildForecastItems();
-  if(forecastObdMode==='active') items = buildObdItems();
-  else if(forecastObdMode==='mixed') items = items.concat(buildObdItems());
+  let baseItems = forecastObdMode==='active' ? [] : buildForecastItems();
+  if(forecastObdMode==='active') baseItems = buildObdItems();
+  else if(forecastObdMode==='mixed') baseItems = baseItems.concat(buildObdItems());
 
-  if(!forecastShowInactive) items = items.filter(it => it.v.active!==false);
+  if(!forecastShowInactive) baseItems = baseItems.filter(it => it.v.active!==false);
+
+  // filtro por plazo temporal (siempre deja pasar los eventos ya vencidos y los OBD activos)
+  if(forecastHorizon!=='all'){
+    const maxDays = parseInt(forecastHorizon);
+    baseItems = baseItems.filter(it => it.remanente.sortValue <= maxDays);
+  }
 
   // filtro por texto (matrícula, conductor, licencia o tarea)
   if(forecastSearch.trim()!==''){
     const q = forecastSearch.toLowerCase();
-    items = items.filter(it => it.v.plate.toLowerCase().includes(q) || it.v.driver.toLowerCase().includes(q) || (it.v.licencia||'').toLowerCase().includes(q) || it.tarea.toLowerCase().includes(q));
+    baseItems = baseItems.filter(it => it.v.plate.toLowerCase().includes(q) || it.v.driver.toLowerCase().includes(q) || (it.v.licencia||'').toLowerCase().includes(q) || it.tarea.toLowerCase().includes(q));
   }
-  // filtro por estado (no aplica a eventos OBD, que son siempre urgentes)
-  if(forecastFilter==='overdue') items = items.filter(it => it.t.isObd || it.remanente.sortValue < 0);
-  if(forecastFilter==='soon') items = items.filter(it => it.t.isObd || (it.remanente.sortValue >= 0 && it.remanente.sortValue <= 30));
-  // filtro por matrícula (chips)
-  if(forecastPlateFilter.size>0) items = items.filter(it => forecastPlateFilter.has(it.v.plate));
-  // filtro por tipo de tarea
-  if(forecastTareaFilter!=='all') items = items.filter(it => it.t.tipo===forecastTareaFilter);
+
+  // valores distintos disponibles para cada columna, calculados ANTES de aplicar los filtros de columna
+  // (así siempre puedes volver a marcar un valor que hayas ocultado)
+  const COLS = ['plate','licencia','tarea','responsable','centro','estado'];
+  const distinctByCol = {};
+  COLS.forEach(col=>{ distinctByCol[col] = Array.from(new Set(baseItems.map(it=>colValue(it,col)))).sort(); });
+
+  // aplica los filtros tipo Excel de cada columna
+  let items = baseItems.filter(it => COLS.every(col => !forecastColFilters[col].has(colValue(it,col))));
 
   function arrow(key){ return forecastSort.key===key ? `<span class="arrow">${forecastSort.dir===1?'▲':'▼'}</span>` : ''; }
 
@@ -1420,11 +1500,11 @@ function renderForecastScreen(){
     });
     colspan = 5;
     theadHTML = `<tr>
-      <th data-key="plate">Matrícula${arrow('plate')}</th>
-      <th data-key="licencia">Licencia/VTC${arrow('licencia')}</th>
+      <th data-key="plate"><div class="col-head-row"><span>Matrícula${arrow('plate')}</span>${colFilterIcon('plate')}</div></th>
+      <th data-key="licencia"><div class="col-head-row"><span>Licencia/VTC${arrow('licencia')}</span>${colFilterIcon('licencia')}</div></th>
       <th>Eventos</th>
       <th data-key="remanente">Remanente más urgente${arrow('remanente')}</th>
-      <th>Estado</th>
+      <th><div class="col-head-row"><span>Estado</span>${colFilterIcon('estado')}</div></th>
     </tr>`;
     rows = groups.map(g=>{
       const v = g.v;
@@ -1456,7 +1536,7 @@ function renderForecastScreen(){
     }).join('');
     footCount = `${groups.length} vehículo${groups.length===1?'':'s'} · ${items.length} evento${items.length===1?'':'s'}`;
   } else {
-    // vista por evento (por defecto): una línea por avería/tarea, sin agrupar
+    // vista por evento (por defecto): una línea por avería/tarea, con todas las columnas
     items.sort((a,b)=>{
       let av, bv;
       if(forecastSort.key==='plate'){ av=a.v.plate; bv=b.v.plate; }
@@ -1467,36 +1547,63 @@ function renderForecastScreen(){
       if(av>bv) return 1*forecastSort.dir;
       return 0;
     });
-    colspan = 6;
+    colspan = 10;
     theadHTML = `<tr>
-      <th data-key="plate">Matrícula${arrow('plate')}</th>
-      <th data-key="licencia">Licencia/VTC${arrow('licencia')}</th>
-      <th>Evento</th>
+      <th data-key="plate"><div class="col-head-row"><span>Matrícula${arrow('plate')}</span>${colFilterIcon('plate')}</div></th>
+      <th data-key="licencia"><div class="col-head-row"><span>Licencia/VTC${arrow('licencia')}</span>${colFilterIcon('licencia')}</div></th>
+      <th><div class="col-head-row"><span>Evento</span>${colFilterIcon('tarea')}</div></th>
+      <th>Materiales</th>
       <th>Vence</th>
       <th data-key="remanente">Remanente${arrow('remanente')}</th>
-      <th>Estado</th>
+      <th><div class="col-head-row"><span>Responsable</span>${colFilterIcon('responsable')}</div></th>
+      <th><div class="col-head-row"><span>Centro</span>${colFilterIcon('centro')}</div></th>
+      <th><div class="col-head-row"><span>Estado</span>${colFilterIcon('estado')}</div></th>
+      <th>Acción</th>
     </tr>`;
     rows = items.map(it=>{
       const v = it.v, t = it.t;
       const info = it.remanente.info;
-      const expanded = !!forecastExpandedTask[t.id];
+      const refsOpen = !!forecastExpandedRefs[t.id];
+      const materialesCell = t.isObd ? '—' : (t.tipo==='Revisión'
+        ? `<select class="mat-select" data-vid="${v.id}" data-tid="${t.id}">
+             <option value="A" ${t.materiales==='A'?'selected':''}>${MATERIALES_REVISION.A}</option>
+             <option value="B" ${t.materiales==='B'?'selected':''}>${MATERIALES_REVISION.B}</option>
+           </select>
+           <div><span class="refs-toggle" data-tid="${t.id}">${refsOpen?'▾ Ocultar refs.':'▸ Ver refs.'}</span></div>
+           ${refsOpen ? `<div class="mat-refs">${revisionParts(t.materiales||'A').map(p=>`<div>${p}: ${materialRefFor(v,p)}</div>`).join('')}</div>` : ''}`
+        : '—');
+      const respCell = t.isObd ? '—' : `
+        <select class="resp-select" data-vid="${v.id}" data-tid="${t.id}">
+          <option value="">—</option>
+          ${responsablesList.map(r=>`<option value="${r}" ${t.responsable===r?'selected':''}>${r}</option>`).join('')}
+        </select>`;
+      const centroCell = t.isObd ? '—' : `
+        <select class="centro-select" data-vid="${v.id}" data-tid="${t.id}">
+          <option value="">—</option>
+          ${centrosList.map(c=>`<option value="${c}" ${t.centro===c?'selected':''}>${c}</option>`).join('')}
+        </select>`;
+      const accionCell = t.isObd
+        ? `<button class="toggle-inactive-btn" data-goto-scanner="${v.id}">Ir al escáner</button>`
+        : `<button class="toggle-inactive-btn" data-complete-tid="${t.id}">Evento realizado</button>`;
       const mainRow = `
-        <tr class="amos-veh-row ${v.active===false?'amos-inactive-row':''}" data-tid2="${t.id}">
-          <td><span class="row-expand">${expanded?'▾':'▸'}</span><span class="plain-plate-cell"><span class="plain-plate-text">${v.plate}</span></span></td>
+        <tr class="${v.active===false?'amos-inactive-row':''}">
+          <td><span class="plain-plate-cell"><span class="plain-plate-text">${v.plate}</span></span></td>
           <td>${v.licencia || '—'}</td>
           <td>${it.tarea}</td>
+          <td>${materialesCell}</td>
           <td>${t.fechaLimite ? formatDate(t.fechaLimite) : (t.kmLimite!=null ? formatKm(t.kmLimite) : '—')}</td>
           <td style="color:${info.color};font-weight:700;">${it.remanente.text}</td>
-          <td><span class="amos-chip" style="color:${info.color};background:${info.color}22;border:1px solid ${info.color}55;">${info.label}</span></td>
+          <td>${respCell}</td>
+          <td>${centroCell}</td>
+          <td><span class="amos-chip" style="color:${info.color};background:${info.color}22;border:1px solid ${info.color}55;">${estadoCategoria(it)}</span></td>
+          <td>${accionCell}</td>
         </tr>
       `;
-      if(!expanded) return mainRow;
-      return mainRow + `<tr class="amos-detail-row"><td colspan="6"><div class="amos-detail-wrap"><div class="task-row">${taskDetailHTML(v, it)}</div></div></td></tr>`;
+      if(t.isObd || forecastCompletingTaskId!==t.id) return mainRow;
+      return mainRow + `<tr class="amos-detail-row"><td colspan="10"><div class="amos-detail-wrap"><div class="task-row">${completionFormHTML(t)}</div></div></td></tr>`;
     }).join('');
     footCount = `${items.length} evento${items.length===1?'':'s'}`;
   }
-
-  const plateChips = vehicles.map(v=>`<span class="plate-chip ${forecastPlateFilter.has(v.plate)?'active':''}" data-plate="${v.plate}">${v.plate}</span>`).join('');
 
   content.innerHTML = `
     <div class="sub-header">
@@ -1505,30 +1612,73 @@ function renderForecastScreen(){
     </div>
     <div class="amos-window">
       <div class="amos-titlebar">TABLA DE PREVISIÓN — EVENTOS DE FLOTA</div>
-      <div class="amos-toolbar">
-        <input type="text" id="forecastSearchInput" placeholder="Buscar por matrícula, licencia o tarea..." value="${forecastSearch}">
-        <select id="forecastFilterSelect">
-          <option value="all" ${forecastFilter==='all'?'selected':''}>Todas</option>
-          <option value="overdue" ${forecastFilter==='overdue'?'selected':''}>Vencidas</option>
-          <option value="soon" ${forecastFilter==='soon'?'selected':''}>Próximas 30 días</option>
-        </select>
-        <select id="forecastTareaSelect">
-          <option value="all" ${forecastTareaFilter==='all'?'selected':''}>Todos los tipos</option>
-          ${TASK_TIPOS.map(tp=>`<option value="${tp}" ${forecastTareaFilter===tp?'selected':''}>${tp}</option>`).join('')}
-          <option value="Cita" ${forecastTareaFilter==='Cita'?'selected':''}>Cita</option>
-          <option value="OBD" ${forecastTareaFilter==='OBD'?'selected':''}>OBD</option>
-        </select>
+      <div class="filter-titlebar">FILTROS DE PREVISIÓN</div>
+      <div class="filter-bar">
+        <div class="filter-group">
+          <div class="filter-group-label">Tipo de evento</div>
+          <div class="filter-group-or">OR</div>
+          <div class="filter-chip-row">
+            ${TAREA_CHIPS.map(c=>filterChip('tarea', c.val, c.label, c.color)).join('')}
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Estado</div>
+          <div class="filter-group-or">OR</div>
+          <div class="filter-chip-row">
+            ${ESTADO_CHIPS.map(c=>filterChip('estado', c.val, c.label, c.color)).join('')}
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Vista</div>
+          <div class="filter-chip-row">
+            <span class="filter-chip ${forecastGrouped?'':'off'}" id="chipAgrupar" style="--chip-color:#41547a;">AGRUP</span>
+            <span class="filter-chip ${forecastShowInactive?'':'off'}" id="chipInactivos" style="--chip-color:#41547a;">INACT</span>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Eventos OBD</div>
+          <div class="filter-chip-row">
+            <span class="filter-chip ${forecastObdMode==='hidden'?'':'off'}" data-obdmode="hidden" style="--chip-color:#6B7280;">OCULTO</span>
+            <span class="filter-chip ${forecastObdMode==='active'?'':'off'}" data-obdmode="active" style="--chip-color:#B00020;">ACTIVOS</span>
+            <span class="filter-chip ${forecastObdMode==='mixed'?'':'off'}" data-obdmode="mixed" style="--chip-color:#0A6ED1;">MEZCLA</span>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Plazo</div>
+          <div class="filter-chip-row">
+            ${HORIZON_CHIPS.map(c=>`<span class="filter-chip ${forecastHorizon===c.val?'':'off'}" data-horizon="${c.val}" style="--chip-color:#0A6ED1;">${c.label}</span>`).join('')}
+          </div>
+        </div>
+        <div class="filter-group" style="border-right:none;flex:1;min-width:160px;">
+          <div class="filter-group-label">Buscar</div>
+          <input type="text" id="forecastSearchInput" class="filter-search-input" placeholder="Matrícula, licencia, tarea..." value="${forecastSearch}">
+        </div>
+        <div class="filter-group" style="border-right:none;">
+          <div class="filter-group-label">&nbsp;</div>
+          <span class="filter-chip off" id="clearFiltersBtn" style="--chip-color:#B00020;">LIMPIAR</span>
+        </div>
       </div>
-      <div class="amos-toolbar">
-        <button class="toggle-inactive-btn ${forecastShowInactive?'is-inactive':''}" id="toggleInactiveBtn">${forecastShowInactive?'Ocultar inactivos':'Mostrar inactivos'}</button>
-        <button class="toggle-inactive-btn ${forecastObdMode!=='hidden'?'is-inactive':''}" id="toggleObdBtn">${OBD_MODE_LABEL[forecastObdMode]}</button>
-        <button class="toggle-inactive-btn ${forecastGrouped?'is-inactive':''}" id="toggleGroupBtn">${forecastGrouped?'Vista: por vehículo':'Vista: por evento'}</button>
-        <button class="toggle-inactive-btn" id="clearFiltersBtn">Limpiar filtros</button>
-      </div>
-      <div class="amos-toolbar" style="flex-direction:column;align-items:stretch;">
-        <div style="font-size:9.5px;color:#41547a;margin-bottom:5px;">Filtrar por matrícula</div>
-        <div class="plate-chip-row">${plateChips}</div>
-      </div>
+      ${forecastOpenColFilter ? `
+        <div class="colfilter-panel">
+          <div class="colfilter-head">Filtro — ${COL_LABELS[forecastOpenColFilter]}<span class="colfilter-close" id="colFilterClose">✕ Cerrar</span></div>
+          <input type="text" id="colFilterSearchInput" class="colfilter-search" placeholder="Buscar valor..." value="${forecastColFilterSearch}">
+          <div class="colfilter-quickrow">
+            <span class="colfilter-quickbtn" id="colFilterAllBtn">Seleccionar todo</span>
+            <span class="colfilter-quickbtn" id="colFilterNoneBtn">Ninguno</span>
+          </div>
+          <div class="colfilter-list">
+            ${distinctByCol[forecastOpenColFilter].filter(val=>val.toLowerCase().includes(forecastColFilterSearch.toLowerCase())).map(val=>`
+              <div class="colfilter-item">
+                <label>
+                  <input type="checkbox" data-colval="${val}" ${forecastColFilters[forecastOpenColFilter].has(val)?'':'checked'}>
+                  ${val}
+                </label>
+                <span class="colfilter-only" data-onlyval="${val}">Solo esto</span>
+              </div>
+            `).join('') || `<div style="font-size:11px;color:#8a97ad;padding:6px 0;">Sin coincidencias.</div>`}
+          </div>
+        </div>
+      ` : ''}
       <div class="amos-toolbar" style="flex-direction:column;align-items:stretch;">
         <div style="display:flex;gap:8px;">
           <div style="flex:1;">
@@ -1560,23 +1710,60 @@ function renderForecastScreen(){
 
   document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
   document.getElementById('forecastSearchInput').oninput = (e)=>{ forecastSearch = e.target.value; renderScreen(); };
-  document.getElementById('forecastFilterSelect').onchange = (e)=>{ forecastFilter = e.target.value; renderScreen(); };
-  document.getElementById('forecastTareaSelect').onchange = (e)=>{ forecastTareaFilter = e.target.value; renderScreen(); };
-  document.getElementById('toggleInactiveBtn').onclick = ()=>{ forecastShowInactive = !forecastShowInactive; renderScreen(); };
-  document.getElementById('toggleObdBtn').onclick = ()=>{
-    const idx = OBD_MODES.indexOf(forecastObdMode);
-    forecastObdMode = OBD_MODES[(idx+1) % OBD_MODES.length];
-    renderScreen();
-  };
-  document.getElementById('toggleGroupBtn').onclick = ()=>{ forecastGrouped = !forecastGrouped; renderScreen(); };
-  document.getElementById('clearFiltersBtn').onclick = ()=>{
-    forecastSearch=''; forecastFilter='all'; forecastTareaFilter='all'; forecastPlateFilter=new Set(); forecastShowInactive=false;
-    renderScreen();
-  };
-  content.querySelectorAll('.plate-chip').forEach(chip=>{
+  document.getElementById('chipAgrupar').onclick = ()=>{ forecastGrouped = !forecastGrouped; renderScreen(); };
+  document.getElementById('chipInactivos').onclick = ()=>{ forecastShowInactive = !forecastShowInactive; renderScreen(); };
+  content.querySelectorAll('[data-obdmode]').forEach(chip=>{
+    chip.onclick = ()=>{ forecastObdMode = chip.dataset.obdmode; renderScreen(); };
+  });
+  content.querySelectorAll('[data-horizon]').forEach(chip=>{
+    chip.onclick = ()=>{ forecastHorizon = chip.dataset.horizon; renderScreen(); };
+  });
+  content.querySelectorAll('.filter-chip[data-chipcol]').forEach(chip=>{
     chip.onclick = ()=>{
-      const p = chip.dataset.plate;
-      if(forecastPlateFilter.has(p)) forecastPlateFilter.delete(p); else forecastPlateFilter.add(p);
+      const col = chip.dataset.chipcol, val = chip.dataset.chipval;
+      const set = forecastColFilters[col];
+      if(set.has(val)) set.delete(val); else set.add(val);
+      renderScreen();
+    };
+  });
+  document.getElementById('clearFiltersBtn').onclick = ()=>{
+    forecastSearch=''; forecastShowInactive=false; forecastHorizon='all';
+    COLS.forEach(col=>forecastColFilters[col]=new Set());
+    forecastOpenColFilter=null; forecastColFilterSearch='';
+    renderScreen();
+  };
+  content.querySelectorAll('.col-filter-btn').forEach(btn=>{
+    btn.onclick = (e)=>{
+      e.stopPropagation();
+      const col = btn.dataset.col;
+      forecastOpenColFilter = (forecastOpenColFilter===col) ? null : col;
+      forecastColFilterSearch = '';
+      renderScreen();
+    };
+  });
+  const colFilterClose = document.getElementById('colFilterClose');
+  if(colFilterClose) colFilterClose.onclick = ()=>{ forecastOpenColFilter=null; renderScreen(); };
+  const colFilterSearchInput = document.getElementById('colFilterSearchInput');
+  if(colFilterSearchInput) colFilterSearchInput.oninput = (e)=>{ forecastColFilterSearch = e.target.value; renderScreen(); };
+  const colFilterAllBtn = document.getElementById('colFilterAllBtn');
+  if(colFilterAllBtn) colFilterAllBtn.onclick = ()=>{ forecastColFilters[forecastOpenColFilter] = new Set(); renderScreen(); };
+  const colFilterNoneBtn = document.getElementById('colFilterNoneBtn');
+  if(colFilterNoneBtn) colFilterNoneBtn.onclick = ()=>{
+    forecastColFilters[forecastOpenColFilter] = new Set(distinctByCol[forecastOpenColFilter]);
+    renderScreen();
+  };
+  content.querySelectorAll('.colfilter-only').forEach(el=>{
+    el.onclick = ()=>{
+      const val = el.dataset.onlyval;
+      forecastColFilters[forecastOpenColFilter] = new Set(distinctByCol[forecastOpenColFilter].filter(v=>v!==val));
+      renderScreen();
+    };
+  });
+  content.querySelectorAll('.colfilter-item input[type=checkbox]').forEach(cb=>{
+    cb.onchange = ()=>{
+      const val = cb.dataset.colval;
+      const set = forecastColFilters[forecastOpenColFilter];
+      if(cb.checked) set.delete(val); else set.add(val);
       renderScreen();
     };
   });
@@ -1597,7 +1784,8 @@ function renderForecastScreen(){
     if(val && !centrosList.includes(val)){ centrosList.push(val); renderScreen(); }
   };
   content.querySelectorAll('.amos-table th[data-key]').forEach(th=>{
-    th.onclick = ()=>{
+    th.onclick = (e)=>{
+      if(e.target.closest('.col-filter-btn')) return;
       const key = th.dataset.key;
       if(forecastSort.key===key) forecastSort.dir *= -1;
       else forecastSort = {key, dir:1};
@@ -1608,15 +1796,6 @@ function renderForecastScreen(){
     row.onclick = ()=>{
       const vid = parseInt(row.dataset.vid);
       forecastExpandedVeh[vid] = !forecastExpandedVeh[vid];
-      forecastCompletingTaskId = null;
-      renderScreen();
-    };
-  });
-  content.querySelectorAll('.amos-veh-row[data-tid2]').forEach(row=>{
-    row.onclick = ()=>{
-      const tid = row.dataset.tid2;
-      const key = /^\d+$/.test(tid) ? parseInt(tid) : tid;
-      forecastExpandedTask[key] = !forecastExpandedTask[key];
       forecastCompletingTaskId = null;
       renderScreen();
     };
@@ -1635,6 +1814,7 @@ function renderForecastScreen(){
       const v = vehicles.find(x=>x.id===parseInt(sel.dataset.vid));
       const t = v.tasks.find(x=>x.id===parseInt(sel.dataset.tid));
       if(t) t.responsable = e.target.value;
+      renderScreen();
     };
   });
   content.querySelectorAll('.centro-select').forEach(sel=>{
@@ -1643,6 +1823,7 @@ function renderForecastScreen(){
       const v = vehicles.find(x=>x.id===parseInt(sel.dataset.vid));
       const t = v.tasks.find(x=>x.id===parseInt(sel.dataset.tid));
       if(t) t.centro = e.target.value;
+      renderScreen();
     };
   });
   content.querySelectorAll('.mat-select').forEach(sel=>{
@@ -1651,6 +1832,7 @@ function renderForecastScreen(){
       const v = vehicles.find(x=>x.id===parseInt(sel.dataset.vid));
       const t = v.tasks.find(x=>x.id===parseInt(sel.dataset.tid));
       if(t) t.materiales = e.target.value;
+      renderScreen();
     };
   });
   content.querySelectorAll('[data-complete-tid]').forEach(btn=>{
@@ -1693,6 +1875,7 @@ function renderForecastScreen(){
   document.getElementById('exportExcelBtn').onclick = ()=>exportForecastToExcel(items);
   document.getElementById('exportPdfBtn').onclick = ()=>exportForecastToPdf(items);
 }
+
 
 function exportForecastToExcel(items){
   const data = items.map(it=>({

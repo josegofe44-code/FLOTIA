@@ -154,6 +154,8 @@
   .filter-group{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:3px 12px;border-right:1px solid #c3cedd;flex:0 0 auto;min-height:44px;}
   .filter-group-label{font-size:8.5px;font-weight:700;color:#41547a;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
   .filter-group-or{font-size:7.5px;color:#9aa5b8;font-style:italic;border-bottom:1px solid #c3cedd;padding:0 10px 2px;margin-bottom:1px;}
+  .filter-group-or.clickable{cursor:pointer;user-select:none;transition:color .14s,border-color .14s;}
+  .filter-group-or.clickable:hover{color:#B00020;border-bottom-color:#B00020;font-style:normal;font-weight:700;}
   .filter-chip-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:420px;}
   .filter-chip{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:32px;height:25px;padding:0 9px;border-radius:99px;background:var(--chip-color);color:#fff;font-size:9px;font-weight:600;letter-spacing:0.04em;cursor:pointer;border:none;white-space:nowrap;box-shadow:var(--shadow-sm);transition:opacity .15s;}
   .filter-chip-icon{width:13px;height:13px;flex-shrink:0;}
@@ -2612,28 +2614,28 @@ function renderForecastScreen(){
       <div class="filter-bar">
         <div class="filter-group">
           <div class="filter-group-label">Tipo de evento</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-orcol="tarea" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${TAREA_CHIPS.map(c=>filterChip('tarea', c.val, c.label, c.color, c.icon)).join('')}
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Estado</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-orcol="estado" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${ESTADO_CHIPS.map(c=>filterChip('estado', c.val, c.label, c.color)).join('')}
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Flota</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-orcol="flota" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${[...new Set(vehicles.map(v=>v.flota||'—'))].sort().map((f,i)=>filterChip('flota', f, shortLabel(f,10), paletteFor(i), ICON_FLOTA)).join('')}
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Conductor</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-orcol="conductor" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${[...new Set(conductores().map(d=>d.nombre))].sort().map((n,i)=>filterChip('conductor', n, shortLabel(n,9), paletteFor(i+2), ICON_CONDUCTOR)).join('')}
             ${filterChip('conductor','—','S/ASIG','#6B7280', ICON_CONDUCTOR)}
@@ -2641,7 +2643,7 @@ function renderForecastScreen(){
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Dueño</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-orcol="dueno" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${[...new Set(vehicles.map(v=>v.dueno||'—'))].sort().map((d,i)=>filterChip('dueno', d, shortLabel(d,11), paletteFor(i+4), ICON_DUENO)).join('')}
           </div>
@@ -2776,6 +2778,16 @@ function renderForecastScreen(){
   });
   content.querySelectorAll('[data-horizon]').forEach(chip=>{
     chip.onclick = ()=>{ forecastHorizon = chip.dataset.horizon; renderScreen(); };
+  });
+  // El rótulo OR funciona como "desmarcar todos" del grupo, para marcar uno solo rápido
+  content.querySelectorAll('[data-orcol]').forEach(el=>{
+    el.onclick = ()=>{
+      const col = el.dataset.orcol;
+      const valores = [...content.querySelectorAll(`.filter-chip[data-chipcol="${col}"]`)].map(c=>c.dataset.chipval);
+      const todosFuera = valores.every(v=>forecastColFilters[col].has(v));
+      forecastColFilters[col] = todosFuera ? new Set() : new Set(valores);
+      renderScreen();
+    };
   });
   content.querySelectorAll('.filter-chip[data-chipcol]').forEach(chip=>{
     chip.onclick = ()=>{
@@ -3175,6 +3187,9 @@ function generateOcrFields(v, key){
 }
 let vehiculosOcrResult = {}; // key del documento -> objeto con los campos extraídos (simulado)
 let vehiculosAskClaudeOpen = false;
+let vehiculosBusqueda = '';
+let vehFiltroTipo = 'all';
+let vehFiltroFlota = 'all';
 let vehiculosDraft = {plate:'', type:'Taxi', licencia:'', otros:'', itv:'', seguro:'', marca:'', modelo:'', bastidor:'', anio:'', motor:'Diésel', cilindrada:'', color:'', plazas:'', duenoTipo:'Empresa', dueno:'', responsable:'', flota:'', conductores:'', photosByTipo:{fichaTecnica:[],permisoCirculacion:[],licenciaVtc:[],otros:[]}};
 
 function resetVehiculosDraft(plate){
@@ -3198,6 +3213,47 @@ function renderVehiculosScreen(){
       </div>
       <div style="font-size:11.5px;color:var(--muted);margin:10px 0 14px;">Si la matrícula ya existe se abrirá su ficha de tareas. Si no existe, se abrirá el alta de vehículo nuevo.</div>
       <button class="add-vehicle-btn" id="newVehicleBtn">+ Alta de vehículo nuevo</button>
+
+      <div class="section-label" style="margin:16px 0 8px;">Buscar en la flota</div>
+      <div class="plate-lookup" style="margin-bottom:10px;">
+        <input type="text" id="vehBuscar" placeholder="Matrícula, marca, modelo, flota, dueño o conductor..." value="${vehiculosBusqueda}">
+        <button id="vehBuscarBtn">Buscar</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <span class="filter-chip ${vehFiltroTipo==='all'?'':'off'}" data-vehtipo="all" style="--chip-color:#41547a;">TODOS (${vehicles.length})</span>
+        ${[...new Set(vehicles.map(v=>v.type))].sort().map((t,i)=>
+          `<span class="filter-chip ${vehFiltroTipo===t?'':'off'}" data-vehtipo="${t}" style="--chip-color:${paletteFor(i)};">${t.toUpperCase()} (${vehicles.filter(v=>v.type===t).length})</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="filter-chip ${vehFiltroFlota==='all'?'':'off'}" data-vehflota="all" style="--chip-color:#41547a;">TODAS LAS FLOTAS</span>
+        ${[...new Set(vehicles.map(v=>v.flota||'—'))].sort().map((f,i)=>
+          `<span class="filter-chip ${vehFiltroFlota===f?'':'off'}" data-vehflota="${f}" style="--chip-color:${paletteFor(i+3)};">${shortLabel(f,14).toUpperCase()}</span>`).join('')}
+      </div>
+      ${(()=>{
+        const q = vehiculosBusqueda.trim().toLowerCase();
+        const lista = vehicles.filter(v=>{
+          if(vehFiltroTipo!=='all' && v.type!==vehFiltroTipo) return false;
+          if(vehFiltroFlota!=='all' && (v.flota||'—')!==vehFiltroFlota) return false;
+          if(!q) return true;
+          const cond = conductoresDe(v);
+          return `${v.plate} ${v.marca||''} ${v.modelo||''} ${v.flota||''} ${v.dueno||''} ${v.responsable||''} ${cond} ${v.licencia||''}`.toLowerCase().includes(q);
+        });
+        if(!lista.length) return '<div style="color:var(--muted);font-size:12.5px;">Ningún coche coincide con la búsqueda.</div>';
+        return lista.map(v=>{
+          const pend = (v.tasks||[]).length;
+          return `
+          <div class="task-row" data-openveh="${v.id}" style="cursor:pointer;">
+            <div class="task-row-top">
+              <span class="task-tipo"><span class="plain-plate-text">${v.plate}</span> ${v.marca||''} ${v.modelo||''}</span>
+              <span class="amos-chip" style="color:${v.active===false?'var(--muted)':(v.dtcs.length?'var(--red)':'var(--green)')};background:${v.active===false?'var(--panel-alt)':(v.dtcs.length?'var(--red)':'var(--green)')}22;">${v.active===false?'INACTIVO':(v.dtcs.length?v.dtcs.length+' AVERÍA(S)':'OK')}</span>
+            </div>
+            <div class="task-meta">
+              ${v.type}${v.licencia?' · Lic. '+v.licencia:''} · ${v.flota||'sin flota'}<br>
+              Dueño: ${v.dueno||'—'} · Conductor: ${conductoresDe(v)} · ${pend} evento(s)
+            </div>
+          </div>`;
+        }).join('');
+      })()}
     `;
   } else if(vehiculosMode==='create'){
     const d = vehiculosDraft;
@@ -3461,6 +3517,23 @@ function renderVehiculosScreen(){
   document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
 
   if(vehiculosMode==='lookup'){
+    const buscarVeh = ()=>{ vehiculosBusqueda = document.getElementById('vehBuscar').value; renderScreen(); };
+    document.getElementById('vehBuscarBtn').onclick = buscarVeh;
+    document.getElementById('vehBuscar').onkeydown = e=>{ if(e.key==='Enter') buscarVeh(); };
+    content.querySelectorAll('[data-vehtipo]').forEach(el=>{
+      el.onclick = ()=>{ vehFiltroTipo = el.dataset.vehtipo; renderScreen(); };
+    });
+    content.querySelectorAll('[data-vehflota]').forEach(el=>{
+      el.onclick = ()=>{ vehFiltroFlota = el.dataset.vehflota; renderScreen(); };
+    });
+    content.querySelectorAll('[data-openveh]').forEach(el=>{
+      el.onclick = ()=>{
+        vehiculosFoundId = parseInt(el.dataset.openveh);
+        vehiculosMode='tasks'; vehiculosSubTab='tareas';
+        vehiculosNewTaskOpen=false; vehiculosInactivating=false;
+        renderScreen();
+      };
+    });
     document.getElementById('plateLookupBtn').onclick = ()=>{
       const plate = document.getElementById('plateLookupInput').value.trim();
       vehiculosPlateInput = plate;
@@ -3768,6 +3841,7 @@ function renderDamageScreen(){
 // ============ PANTALLA: RECURSOS HUMANOS ============
 let rrhhTab = 'plantilla';        // 'plantilla' | 'candidatos'
 let rrhhFiltroRol = 'all';
+let plantillaBusqueda = '';
 let conductorFormOpen = false;
 let conductorEditingId = null;
 let candidatoFormOpen = false;
@@ -3793,7 +3867,13 @@ function rrhhTabsHTML(){
 function rrhhPlantillaHTML(){
   const editing = conductorEditingId ? drivers.find(d=>d.id===conductorEditingId) : null;
   const esConductor = editing ? editing.rol==='Conductor' : true;
-  const lista = drivers.filter(d=> rrhhFiltroRol==='all' || d.rol===rrhhFiltroRol);
+  const qp = plantillaBusqueda.trim().toLowerCase();
+  const lista = drivers.filter(d=>{
+    if(rrhhFiltroRol!=='all' && d.rol!==rrhhFiltroRol) return false;
+    if(!qp) return true;
+    const veh = vehicles.find(x=>x.id===d.vehicleId);
+    return `${d.nombre} ${d.rol} ${d.telefono||''} ${d.email||''} ${d.direccion||''} ${d.notas||''} ${veh?veh.plate:''}`.toLowerCase().includes(qp);
+  });
   const estadoColor = {Activo:'var(--green)', Vacaciones:'var(--orange)', Librando:'#6B7280', 'Baja laboral':'var(--red)'};
 
   const formHTML = !conductorFormOpen ? '' : `
@@ -3835,7 +3915,11 @@ function rrhhPlantillaHTML(){
       ${rrhhTabsHTML()}
       <button class="add-vehicle-btn" id="toggleDriverForm">${conductorFormOpen?'✕ Cancelar':'+ Dar de alta personal'}</button>
       ${formHTML}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 10px;">
+      <div class="plate-lookup" style="margin:12px 0 10px;">
+        <input type="text" id="plBuscar" placeholder="Buscar por nombre, puesto, teléfono o coche..." value="${plantillaBusqueda}">
+        <button id="plBuscarBtn">Buscar</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px;">
         <span class="filter-chip ${rrhhFiltroRol==='all'?'':'off'}" data-rolfiltro="all" style="--chip-color:#41547a;">TODOS (${drivers.length})</span>
         ${ROLES_PERSONAL.filter(r=>drivers.some(d=>d.rol===r)).map(r=>
           `<span class="filter-chip ${rrhhFiltroRol===r?'':'off'}" data-rolfiltro="${r}" style="--chip-color:${ROL_COLOR[r]||'#6B7280'};">${r.toUpperCase()} (${drivers.filter(d=>d.rol===r).length})</span>`).join('')}
@@ -3947,6 +4031,9 @@ function wireRrhhPlantilla(){
   document.getElementById('toggleDriverForm').onclick = ()=>{
     conductorFormOpen = !conductorFormOpen; conductorEditingId = null; renderConductoresScreen();
   };
+  const buscarPl = ()=>{ plantillaBusqueda = document.getElementById('plBuscar').value; renderConductoresScreen(); };
+  document.getElementById('plBuscarBtn').onclick = buscarPl;
+  document.getElementById('plBuscar').onkeydown = e=>{ if(e.key==='Enter') buscarPl(); };
   content.querySelectorAll('[data-rolfiltro]').forEach(el=>{
     el.onclick = ()=>{ rrhhFiltroRol = el.dataset.rolfiltro; renderConductoresScreen(); };
   });
@@ -4717,7 +4804,7 @@ function renderHistorialScreen(){
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Tipo de evento</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-or2col="histtipo" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">${tipos.map((t,i)=>chipTipo(t,i)).join('')}</div>
         </div>
         <div class="filter-group">
@@ -4842,6 +4929,14 @@ function renderHistorialScreen(){
       histRango = el.dataset.histrango;
       // el atajo manda sobre las fechas sueltas
       histDesde=''; histHasta='';
+      renderHistorialScreen();
+    };
+  });
+  content.querySelectorAll('[data-or2col="histtipo"]').forEach(el=>{
+    el.onclick = ()=>{
+      const valores = [...content.querySelectorAll('[data-histtipo]')].map(c=>c.dataset.histtipo);
+      const todosFuera = valores.every(v=>histTipos.has(v));
+      histTipos = todosFuera ? new Set() : new Set(valores);
       renderHistorialScreen();
     };
   });
@@ -5033,16 +5128,20 @@ function exportHistorialPdf(items){
 })();
 let multasResuelto = null;   // previsualización del responsable calculado
 let multasFiltro = 'all';    // 'all' | 'conductor' | 'taller' | 'pendiente'
+let multasBusqueda = '';
 
 function renderMultasScreen(){
   const content = document.getElementById('content');
   content.classList.remove('no-pad');
   const f = multasForm;
 
+  const qm = multasBusqueda.trim().toLowerCase();
   const lista = fines.slice().sort((a,b)=> (b.fecha+b.hora).localeCompare(a.fecha+a.hora)).filter(m=>{
-    if(multasFiltro==='all') return true;
-    if(multasFiltro==='pendiente') return !m.pagada;
-    return m.responsableTipo===multasFiltro;
+    if(multasFiltro==='pendiente' && m.pagada) return false;
+    if(multasFiltro!=='all' && multasFiltro!=='pendiente' && m.responsableTipo!==multasFiltro) return false;
+    if(!qm) return true;
+    const v = vehicles.find(x=>x.id===m.vehicleId);
+    return `${v?v.plate:''} ${m.concepto||''} ${m.lugar||''} ${m.responsableNombre||''} ${m.fecha}`.toLowerCase().includes(qm);
   });
   const total = fines.reduce((s,m)=>s+(m.importe||0),0);
   const pendiente = fines.filter(m=>!m.pagada).reduce((s,m)=>s+(m.importe||0),0);
@@ -5088,7 +5187,11 @@ function renderMultasScreen(){
         </div>
       </div>
 
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 9px;">
+      <div class="plate-lookup" style="margin:14px 0 9px;">
+        <input type="text" id="mtBuscar" placeholder="Buscar por matrícula, concepto, lugar o responsable..." value="${multasBusqueda}">
+        <button id="mtBuscarFiltroBtn">Buscar</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 9px;">
         ${[['all','Todas'],['conductor','De conductor'],['taller','En taller'],['pendiente','Pendientes de pago']].map(([v,l])=>
           `<span class="filter-chip ${multasFiltro===v?'':'off'}" data-mtfilter="${v}" style="--chip-color:#41547a;">${l}</span>`).join('')}
       </div>
@@ -5166,6 +5269,9 @@ function renderMultasScreen(){
     multasResuelto = null;
     renderMultasScreen();
   };
+  const buscarMt = ()=>{ multasBusqueda = document.getElementById('mtBuscar').value; renderMultasScreen(); };
+  document.getElementById('mtBuscarFiltroBtn').onclick = buscarMt;
+  document.getElementById('mtBuscar').onkeydown = e=>{ if(e.key==='Enter') buscarMt(); };
   content.querySelectorAll('[data-mtfilter]').forEach(el=>{
     el.onclick = ()=>{ multasFiltro = el.dataset.mtfilter; renderMultasScreen(); };
   });
@@ -5193,6 +5299,7 @@ let centros = [
 let centroFormOpen = false;
 let centroEditingId = null;
 let centrosFiltroTipo = 'all';
+let centrosBusqueda = '';
 
 // La lista de centros de los eventos se alimenta de esta pantalla
 function sincronizarCentrosList(){
@@ -5202,7 +5309,12 @@ function sincronizarCentrosList(){
 function renderCentrosScreen(){
   const content = document.getElementById('content');
   content.classList.remove('no-pad');
-  const lista = centros.filter(c=> centrosFiltroTipo==='all' || c.tipo===centrosFiltroTipo);
+  const qc = centrosBusqueda.trim().toLowerCase();
+  const lista = centros.filter(c=>{
+    if(centrosFiltroTipo!=='all' && c.tipo!==centrosFiltroTipo) return false;
+    if(!qc) return true;
+    return `${c.nombre} ${c.tipo} ${c.direccion} ${c.telefono} ${c.contacto} ${c.notas}`.toLowerCase().includes(qc);
+  });
   const editing = centroEditingId ? centros.find(c=>c.id===centroEditingId) : null;
 
   // cuántos eventos y qué gasto acumula cada centro
@@ -5245,7 +5357,11 @@ function renderCentrosScreen(){
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Talleres, estaciones de ITV y cualquier otro proveedor al que lleves los coches. Los que des de alta aquí aparecen como opción de "Centro" al planificar eventos.</div>
       <button class="add-vehicle-btn" id="ctToggleForm">${centroFormOpen?'✕ Cancelar':'+ Dar de alta centro'}</button>
       ${formHTML}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 10px;">
+      <div class="plate-lookup" style="margin:12px 0 10px;">
+        <input type="text" id="ctBuscar" placeholder="Buscar por nombre, dirección, contacto..." value="${centrosBusqueda}">
+        <button id="ctBuscarBtn">Buscar</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px;">
         <span class="filter-chip ${centrosFiltroTipo==='all'?'':'off'}" data-ctfiltro="all" style="--chip-color:#41547a;">TODOS (${centros.length})</span>
         ${TIPOS_CENTRO.filter(t=>centros.some(c=>c.tipo===t)).map((t,i)=>
           `<span class="filter-chip ${centrosFiltroTipo===t?'':'off'}" data-ctfiltro="${t}" style="--chip-color:${paletteFor(i)};">${t.toUpperCase()} (${centros.filter(c=>c.tipo===t).length})</span>`).join('')}
@@ -5277,6 +5393,9 @@ function renderCentrosScreen(){
   document.getElementById('ctToggleForm').onclick = ()=>{
     centroFormOpen = !centroFormOpen; centroEditingId = null; renderCentrosScreen();
   };
+  const buscarCentro = ()=>{ centrosBusqueda = document.getElementById('ctBuscar').value; renderCentrosScreen(); };
+  document.getElementById('ctBuscarBtn').onclick = buscarCentro;
+  document.getElementById('ctBuscar').onkeydown = e=>{ if(e.key==='Enter') buscarCentro(); };
   content.querySelectorAll('[data-ctfiltro]').forEach(el=>{
     el.onclick = ()=>{ centrosFiltroTipo = el.dataset.ctfiltro; renderCentrosScreen(); };
   });
@@ -5492,21 +5611,21 @@ function renderTurnosScreen(){
       <div class="tn-filters">
         <div class="filter-group">
           <div class="filter-group-label">Conductor</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-or2col="conductor" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${conductores().map((d,i)=>turnoChip('conductor', d.nombre, shortLabel(d.nombre,9), paletteFor(i+2), ICON_CONDUCTOR)).join('')}
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Coche</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-or2col="matricula" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${[...new Set(conductores().map(d=>turnosDatosDe(d).matricula))].sort().map((mat,i)=>turnoChip('matricula', mat, mat, paletteFor(i), ICON_COCHE)).join('')}
           </div>
         </div>
         <div class="filter-group" style="border-right:none;">
           <div class="filter-group-label">Flota</div>
-          <div class="filter-group-or">OR</div>
+          <div class="filter-group-or clickable" data-or2col="flota" title="Desmarcar todos">OR</div>
           <div class="filter-chip-row">
             ${[...new Set(conductores().map(d=>turnosDatosDe(d).flota))].sort().map((f,i)=>turnoChip('flota', f, shortLabel(f,10), paletteFor(i+4), ICON_FLOTA)).join('')}
           </div>
@@ -5606,6 +5725,16 @@ function renderTurnosScreen(){
     renderTurnosScreen();
   };
   document.getElementById('tnNotesBtn').onclick = ()=>{ turnosSoloNotas = !turnosSoloNotas; renderTurnosScreen(); };
+  content.querySelectorAll('[data-or2col]').forEach(el=>{
+    const col = el.dataset.or2col;
+    if(!turnosFilters[col]) return;
+    el.onclick = ()=>{
+      const valores = [...content.querySelectorAll(`.filter-chip[data-tnchipcol="${col}"]`)].map(c=>c.dataset.tnchipval);
+      const todosFuera = valores.every(v=>turnosFilters[col].has(v));
+      turnosFilters[col] = todosFuera ? new Set() : new Set(valores);
+      renderTurnosScreen();
+    };
+  });
   content.querySelectorAll('[data-tnchipcol]').forEach(el=>{
     el.onclick = ()=>{
       const set = turnosFilters[el.dataset.tnchipcol];
@@ -5741,6 +5870,7 @@ function generarTurnosMes(){
 
 // ============ PANTALLA: EVENTOS (acceso directo por matrícula a la gestión de eventos) ============
 let eventosPlateInput = '';
+let eventosBusqueda = '';
 function renderEventosScreen(){
   const content = document.getElementById('content');
   content.classList.remove('no-pad');
@@ -5758,7 +5888,27 @@ function renderEventosScreen(){
         <input type="text" id="eventosPlateInput" list="eventosPlatesList" placeholder="1234 ABC" value="${eventosPlateInput}">
         <button id="eventosPlateBtn">Continuar</button>
       </div>
-      <div style="font-size:11.5px;color:var(--muted);margin:10px 0 14px;">Elige la matrícula para crear o gestionar sus eventos (ITV, seguro, revisión, cita, venta, OBD...). También puedes crearlos desde la ficha del vehículo, en Vehículos.</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:10px 0 14px;">Elige la matrícula para crear o gestionar sus eventos (ITV, seguro, revisión, cita, venta, OBD...). También puedes crearlos desde la ficha del vehículo, en Coches.</div>
+      <div class="section-label" style="margin:14px 0 8px;">O busca el coche</div>
+      <div class="plate-lookup" style="margin-bottom:10px;">
+        <input type="text" id="evBuscar" placeholder="Matrícula, marca, flota o conductor..." value="${eventosBusqueda}">
+        <button id="evBuscarBtn">Buscar</button>
+      </div>
+      ${(()=>{
+        const q = eventosBusqueda.trim().toLowerCase();
+        if(!q) return '';
+        const lista = vehicles.filter(v=>
+          `${v.plate} ${v.marca||''} ${v.modelo||''} ${v.flota||''} ${conductoresDe(v)}`.toLowerCase().includes(q));
+        if(!lista.length) return '<div style="color:var(--muted);font-size:12.5px;margin-bottom:10px;">Ningún coche coincide.</div>';
+        return lista.map(v=>`
+          <div class="task-row" data-evveh="${v.id}" style="cursor:pointer;">
+            <div class="task-row-top">
+              <span class="task-tipo"><span class="plain-plate-text">${v.plate}</span> ${v.marca||''} ${v.modelo||''}</span>
+              <span class="amos-chip" style="color:var(--muted);background:var(--panel-alt);border:1px solid var(--border);">${(v.tasks||[]).length} evento(s)</span>
+            </div>
+            <div class="task-meta">${v.type} · ${v.flota||'sin flota'} · ${conductoresDe(v)}</div>
+          </div>`).join('');
+      })()}
       <div class="section-label" style="margin:14px 0 8px 2px;">Todos los eventos de la flota</div>
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Para ver, filtrar y editar todos los eventos ya creados, usa Previsión de flota.</div>
       <button class="add-vehicle-btn" id="goForecastFromEventos">Ir a Previsión de flota</button>
@@ -5781,6 +5931,19 @@ function renderEventosScreen(){
       showToast('Matrícula no encontrada', 'Da de alta el vehículo primero desde Vehículos.');
     }
   };
+  const buscarEv = ()=>{ eventosBusqueda = document.getElementById('evBuscar').value; renderEventosScreen(); };
+  document.getElementById('evBuscarBtn').onclick = buscarEv;
+  document.getElementById('evBuscar').onkeydown = e=>{ if(e.key==='Enter') buscarEv(); };
+  content.querySelectorAll('[data-evveh]').forEach(el=>{
+    el.onclick = ()=>{
+      const found = vehicles.find(x=>x.id===parseInt(el.dataset.evveh));
+      if(!found) return;
+      vehiculosFoundId = found.id; vehiculosMode='tasks'; vehiculosSubTab='tareas';
+      vehiculosNewTaskOpen=true; vehiculosInactivating=false;
+      vehiculosNewTask = {tipo:'ITV caducidad', limiteType:'fecha', fechaLimite:'', fechaPreaviso:'', kmLimite:'', horasParado:'', notas:'', costeEstimado:''};
+      screen='vehiculos'; renderScreen();
+    };
+  });
   document.getElementById('eventosPlateBtn').onclick = goToVehicleTasks;
   document.getElementById('eventosPlateInput').onkeydown = (e)=>{ if(e.key==='Enter') goToVehicleTasks(); };
 }

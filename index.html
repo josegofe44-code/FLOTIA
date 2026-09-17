@@ -680,6 +680,13 @@
   .tn-sticky-3{border-right:2px solid var(--border-strong) !important;}
   .hist-select{font-family:var(--font-display);font-size:10px;border:1px solid #c3cedd;border-radius:5px;padding:3px 5px;background:#fff;color:#1a2b45;max-width:132px;}
   .hist-select:focus{outline:none;border-color:var(--orange);}
+  .docs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:12px;}
+  .doc-slot{border:1px solid var(--border);border-radius:9px;padding:9px;background:var(--panel-alt);text-align:center;}
+  .doc-slot-label{font-size:9.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600;margin-bottom:6px;}
+  .doc-thumb{width:100%;height:62px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block;}
+  .doc-empty{height:62px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);border:1px dashed var(--border-strong);border-radius:6px;}
+  .doc-add{display:inline-block;margin-top:6px;font-size:10.5px;color:var(--orange);cursor:pointer;font-weight:600;}
+  .doc-add:hover{text-decoration:underline;}
   .rrhh-tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--border);}
   .rrhh-tab{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
   .rrhh-tab:hover{color:var(--text);}
@@ -939,7 +946,11 @@ let vehicles = PLATES.map((plate,i)=>({
   photos:[], documents:[], damagePoints:[], maintenanceLog:[], materiales: defaultMaterialesSet(),
   tasks: []
 }));
-vehicles.forEach(v=>{
+vehicles.forEach((v,idx)=>{
+  // Último movimiento: la mayoría acaba de circular, un par llevan horas parados
+  v.lastMovementAt = idx % 4 === 1
+    ? Date.now() - Math.round(randRange(5.5, 9)) * 3600000   // parado: dispara alerta si hay turno activo
+    : Date.now() - Math.round(randRange(1, 40)) * 60000;
   // Ingresos y gastos simulados de los últimos 6 meses
   for(let m=5;m>=0;m--){
     const mes = new Date(); mes.setMonth(mes.getMonth()-m); mes.setDate(1);
@@ -981,6 +992,13 @@ let nextDriverId = 1;
 // ---- Recursos humanos: toda la plantilla, no solo conductores ----
 const ROLES_PERSONAL = ['Conductor', 'Mecánico', 'Administrativo', 'Secretario/a', 'Comercial', 'Jefe de taller', 'Otros'];
 const ROL_CANDIDATO = 'Candidato';
+const DOCS_PERSONAL = [
+  {key:'dni', label:'DNI / NIE'},
+  {key:'carnet', label:'Carnet de conducir'},
+  {key:'licencia', label:'Licencia taxi / VTC'},
+  {key:'otros', label:'Otros documentos'},
+];
+let drvDocsDraft = {};   // documentos subidos antes de guardar la ficha
 const ROL_COLOR = {
   'Conductor':'#1B4DE4', 'Mecánico':'#C8841C', 'Administrativo':'#0E7490',
   'Secretario/a':'#6D4AC4', 'Comercial':'#0B7A55', 'Jefe de taller':'#92400E',
@@ -1005,6 +1023,8 @@ let candidatos = [
   {id: nextCandidatoId++, nombre:'Nuria B.', puesto:'Administrativo', telefono:'622 333 444', email:'nuria.b@mail.com', fechaCV:'2026-09-02', fuente:'InfoJobs', notas:'Experiencia en gestoría', estado:'En proceso', cvArchivo:''},
   {id: nextCandidatoId++, nombre:'Iván M.', puesto:'Mecánico', telefono:'633 444 555', email:'ivan.m@mail.com', fechaCV:'2026-09-10', fuente:'Entrega en mano', notas:'FP Automoción, sin experiencia', estado:'Recibido', cvArchivo:''},
 ];
+const ESTADOS_MULTA = ['Pendiente', 'Pagada', 'Enviada al conductor'];
+const MULTA_COLOR = {'Pendiente':'#C0223B', 'Pagada':'#0B7A55', 'Enviada al conductor':'#C8841C'};
 const ESTADOS_CANDIDATO = ['Recibido', 'En proceso', 'Entrevistado', 'Contratado', 'Descartado'];
 // Turnos asignados: una entrada por conductor y día concreto del mes
 const DIAS_SEMANA = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -1049,7 +1069,7 @@ function createVehicle(plate, type, licencia, otros, itvDate, seguroDate, extra)
     rpm: Math.round(randRange(750,900)), temp: Math.round(randRange(84,92)),
     speed:0, voltage:14.1, dtcs:[], status:'ok', marker:null, appointment:null, engineOff:false,
     estimatedKm,
-    kmReal:estimatedKm, kmRealDate:new Date(), avgKmDia:250, ...defaultLiveExtras(),
+    kmReal:estimatedKm, kmRealDate:new Date(), avgKmDia:250, lastMovementAt: Date.now(), ...defaultLiveExtras(),
     photosByTipo:{fichaTecnica:[], permisoCirculacion:[], licenciaVtc:[], otros:[]},
     photos:[], documents:[], damagePoints:[], maintenanceLog:[], materiales: defaultMaterialesSet(),
     tasks: []
@@ -2159,6 +2179,7 @@ const TAREA_CHIPS = [
   {val:'Cita programada en taller', label:'CITA', color:'#7B4FA6', icon:'<rect x="2.3" y="3.6" width="11.4" height="9.8" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.1"/><line x1="2.3" y1="6.6" x2="13.7" y2="6.6" stroke="currentColor" stroke-width="1.1"/><line x1="5" y1="2.1" x2="5" y2="4.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="11" y1="2.1" x2="11" y2="4.4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>'},
   {val:'Venta de coche', label:'VENTA', color:'#8a5a00', icon:'<path d="M2.4 8.1L7.9 2.6h4.7v4.7L7.1 12.8a0.95 0.95 0 01-1.35 0L2.4 9.45a0.95 0.95 0 010-1.35z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><circle cx="10.2" cy="5" r="1" fill="currentColor"/>'},
   {val:'Otros', label:'OTR', color:'#6B7280', icon:'<circle cx="4.2" cy="8" r="1.25" fill="currentColor"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><circle cx="11.8" cy="8" r="1.25" fill="currentColor"/>'},
+  {val:'Alerta', label:'ALERTA', color:'#C8841C', icon:'<path d="M8 1.9a6.1 6.1 0 016.1 6.1c0 2.4-1 3.6-1 5.2H2.9c0-1.6-1-2.8-1-5.2A6.1 6.1 0 018 1.9z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/><path d="M6.4 14.4h3.2" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/><circle cx="8" cy="7.7" r="1.5" fill="currentColor"/>'},
   {val:'OBD', label:'OBD', color:'#B00020', icon:'<path d="M8 2.3L14.3 13H1.7L8 2.3z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><line x1="8" y1="6.6" x2="8" y2="9.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="11.1" r="0.7" fill="currentColor"/>'},
 ];
 const ICON_FLOTA = '<rect x="1.6" y="6.4" width="7" height="4.6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1"/><circle cx="3.6" cy="11.6" r="1.1" fill="currentColor"/><circle cx="6.8" cy="11.6" r="1.1" fill="currentColor"/><rect x="8.6" y="4.2" width="5.8" height="4" rx="0.9" fill="none" stroke="currentColor" stroke-width="1" opacity="0.75"/>';
@@ -2173,6 +2194,7 @@ function shortLabel(s, n){
 }
 function ESTADO_CHIPS_DEF(){ return ESTADO_CHIPS; }
 const ESTADO_CHIPS = [
+  {val:'Alerta', label:'ALERTA', color:'#C8841C'},
   {val:'Vencida', label:'VEN', color:'#B00020'},
   {val:'Próxima', label:'PRÓX', color:'#E9730C'},
   {val:'OK', label:'OK', color:'#0E7D3C'},
@@ -2190,7 +2212,7 @@ function conductoresDe(v){
   return todos.length ? todos.join(', ') : '—';
 }
 function tipoIconCell(t){
-  const key = t.isObd ? 'OBD' : t.tipo;
+  const key = t.isAlerta ? 'Alerta' : (t.isObd ? 'OBD' : t.tipo);
   const chip = TAREA_CHIPS.find(c=>c.val===key) || TAREA_CHIPS.find(c=>c.val==='Otros');
   return `<span class="tipo-badge" style="background:${chip.color};" title="${key}">
     <svg viewBox="0 0 16 16">${chip.icon}</svg>
@@ -2208,6 +2230,7 @@ function formatHorasParado(h){
   return 'h';
 }
 function estadoCategoria(it){
+  if(it.t && it.t.isAlerta) return 'Alerta';
   if(it.t.isObd) return 'Avería activa';
   const sv = it.remanente.sortValue;
   if(sv<0) return 'Vencida';
@@ -2263,6 +2286,70 @@ function buildForecastItems(){
   });
   return items;
 }
+// ---- Alertas automáticas: coche parado con conductor en turno ----
+const ALERTA_HORAS_PARADO = 5;
+// ¿Hay alguien de turno ahora mismo con ese coche?
+function conductorEnTurnoAhora(vehicleId){
+  const ahora = new Date();
+  const hoyStr = toDateInputValue(ahora);
+  const hora = ahora.getHours();
+  for(const d of conductores()){
+    const s = shifts[shiftKey(d.id, hoyStr)];
+    if(!s || s.vehicleId!==vehicleId) continue;
+    if(s.turno==='L' || s.turno==='—') continue;
+    if(turnoCubreHora(s.turno, hora)) return {driver:d, turno:s.turno};
+  }
+  // turnos que arrancaron ayer y cruzan la medianoche
+  if(hora < 6){
+    const ayer = new Date(ahora); ayer.setDate(ayer.getDate()-1);
+    const ayerStr = toDateInputValue(ayer);
+    for(const d of conductores()){
+      const s = shifts[shiftKey(d.id, ayerStr)];
+      if(!s || s.vehicleId!==vehicleId) continue;
+      if(s.turno==='T' || s.turno==='N') return {driver:d, turno:s.turno};
+    }
+  }
+  return null;
+}
+// Avisa una sola vez por coche cuando se dispara la alerta, y rearma al volver a moverse
+let alertasAvisadas = {};
+function revisarAlertasParado(){
+  const ahora = Date.now();
+  vehicles.forEach(v=>{
+    if(v.active===false || !v.lastMovementAt) return;
+    const horas = (ahora - v.lastMovementAt)/3600000;
+    if(horas < ALERTA_HORAS_PARADO){ alertasAvisadas[v.id] = false; return; }
+    if(alertasAvisadas[v.id]) return;
+    const enTurno = conductorEnTurnoAhora(v.id);
+    if(!enTurno) return;
+    alertasAvisadas[v.id] = true;
+    addLog(`${v.plate} → ALERTA: ${Math.floor(horas)} h sin moverse con ${enTurno.driver.nombre} en turno`, 'fault');
+  });
+}
+
+function buildAlertaItems(){
+  const ahora = Date.now();
+  const out = [];
+  vehicles.forEach(v=>{
+    if(v.active===false) return;
+    if(!v.lastMovementAt) return;
+    const horasParado = (ahora - v.lastMovementAt) / 3600000;
+    if(horasParado < ALERTA_HORAS_PARADO) return;
+    const enTurno = conductorEnTurnoAhora(v.id);
+    if(!enTurno) return;   // si nadie debería estar trabajando, no es una anomalía
+    const h = Math.floor(horasParado);
+    out.push({
+      v,
+      t:{id:'alerta-'+v.id, tipo:'Alerta', limiteType:'alerta', fechaLimite:null, fechaPreaviso:null,
+         kmLimite:null, responsable:'', centro:'', materiales:null, isObd:true, isAlerta:true},
+      tarea:`Alerta — parado ${h} h con ${enTurno.driver.nombre} en turno de ${TURNO_NOMBRE[enTurno.turno]}`,
+      remanente:{text:`${h} h parado`, sortValue:-999998, info:{color:'var(--taxi-accent)', label:'⚠ Coche parado'}},
+      preaviso:-999998
+    });
+  });
+  return out;
+}
+
 function buildObdItems(){
   return vehicles.filter(v=>v.dtcs.length>0).map(v=>({
     v,
@@ -2393,6 +2480,8 @@ function renderForecastScreen(){
   let baseItems = forecastObdMode==='active' ? [] : buildForecastItems();
   if(forecastObdMode==='active') baseItems = buildObdItems();
   else if(forecastObdMode==='mixed') baseItems = baseItems.concat(buildObdItems());
+  // Las alertas de coche parado se muestran siempre: son anomalías del momento, no eventos programados
+  baseItems = buildAlertaItems().concat(baseItems);
 
   if(!forecastShowInactive) baseItems = baseItems.filter(it => it.v.active!==false);
 
@@ -2553,7 +2642,9 @@ function renderForecastScreen(){
           : `<input type="date" class="cell-input date-input flim-input" data-vid="${v.id}" data-tid="${t.id}" value="${toDateInputValue(t.fechaLimite)}" style="color:${fechaColor};font-weight:${fechaWeight};">`;
       }
       const planCell = t.isObd ? '—' : `<input type="date" class="cell-input date-input plan-input" data-vid="${v.id}" data-tid="${t.id}" value="${toDateInputValue(t.planificado)}">`;
-      const eventoCell = t.isObd
+      const eventoCell = t.isAlerta
+        ? `${it.tarea} · <span class="obd-goto-link" data-goto-map="${v.id}">Ver en el mapa</span>`
+        : t.isObd
         ? `${it.tarea} · <span class="obd-goto-link" data-goto-scanner2="${v.id}">Ir al escáner</span>`
         : `<select class="cell-select tipo-select" data-vid="${v.id}" data-tid="${t.id}">
              ${TAREA_CHIPS.filter(c=>c.val!=='OBD').map(c=>`<option value="${c.val}" ${t.tipo===c.val?'selected':''}>${c.val}</option>`).join('')}
@@ -2844,6 +2935,13 @@ function renderForecastScreen(){
       selectedId = parseInt(btn.dataset.gotoScanner);
       screen='mantenimiento'; pickerOpen.mant=false; scannerMenu='root'; showAssistant=false;
       renderScreen();
+    };
+  });
+  content.querySelectorAll('[data-goto-map]').forEach(el=>{
+    el.onclick = (e)=>{
+      e.stopPropagation();
+      selectedId = parseInt(el.dataset.gotoMap);
+      screen='map'; renderScreen();
     };
   });
   content.querySelectorAll('[data-goto-scanner2]').forEach(el=>{
@@ -3900,7 +3998,28 @@ function rrhhPlantillaHTML(){
             ${vehicles.map(v=>`<option value="${v.id}" ${editing&&editing.vehicleId===v.id?'selected':''}>${v.plate}</option>`).join('')}
           </select>
         </div>
+        <div class="form-row"><label>¿Tiene discapacidad reconocida?</label>
+          <select id="drvDiscap">
+            <option value="no" ${editing&&editing.discapacidad?'':'selected'}>No</option>
+            <option value="si" ${editing&&editing.discapacidad?'selected':''}>Sí</option>
+          </select>
+        </div>
+        <div class="form-row" id="drvDiscapGradoRow" style="${editing&&editing.discapacidad?'':'display:none;'}"><label>Grado / tipo</label><input type="text" id="drvDiscapGrado" value="${editing?(editing.discapacidadDetalle||''):''}" placeholder="Ej: 33% movilidad reducida"></div>
         <div class="form-row" style="grid-column:1/-1;"><label>Notas</label><input type="text" id="drvNotas" value="${editing?(editing.notas||''):''}" placeholder="Especialidad, observaciones..."></div>
+      </div>
+
+      <div class="section-label" style="margin:14px 0 8px;">Documentación</div>
+      <div class="docs-grid">
+        ${DOCS_PERSONAL.map(doc=>{
+          const guardado = editing && editing.docs ? editing.docs[doc.key] : null;
+          return `
+          <div class="doc-slot">
+            <div class="doc-slot-label">${doc.label}</div>
+            ${guardado ? `<img src="${guardado}" class="doc-thumb">` : '<div class="doc-empty">Sin archivo</div>'}
+            <label class="doc-add" for="doc-${doc.key}">${guardado?'Cambiar':'+ Subir'}</label>
+            <input type="file" id="doc-${doc.key}" data-dockey="${doc.key}" accept="image/*,.pdf" style="display:none;">
+          </div>`;
+        }).join('')}
       </div>
       <div id="drvFormError" style="color:var(--red);font-size:11.5px;display:none;margin-bottom:8px;"></div>
       <button class="save-btn" id="saveDriverBtn">${editing?'Guardar cambios':'Dar de alta'}</button>
@@ -3937,6 +4056,8 @@ function rrhhPlantillaHTML(){
             ${d.telefono || '—'}${d.email?' · '+d.email:''} · ${d.direccion}<br>
             ${d.rol==='Conductor' ? `Turno: ${d.turno} · Coche: ${v ? v.plate : 'sin asignar'}` : `Horario: ${d.horario || 'sin definir'}`}
             ${d.altaFecha?` · Alta: ${d.altaFecha.split('-').reverse().join('/')}`:''}
+            ${d.discapacidad?`<br><span class="amos-chip" style="color:#0E7490;background:#0E749018;">DISCAPACIDAD${d.discapacidadDetalle?' · '+d.discapacidadDetalle:''}</span>`:''}
+            ${d.docs && Object.keys(d.docs).filter(k=>d.docs[k]).length ? `<br><span style="color:var(--green);font-size:10.5px;">${Object.keys(d.docs).filter(k=>d.docs[k]).map(k=>(DOCS_PERSONAL.find(x=>x.key===k)||{}).label).join(' · ')}</span>` : ''}
             ${d.notas?`<br><span style="color:var(--muted);">${d.notas}</span>`:''}
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
@@ -4029,7 +4150,7 @@ function wireRrhhComun(){
 function wireRrhhPlantilla(){
   const content = document.getElementById('content');
   document.getElementById('toggleDriverForm').onclick = ()=>{
-    conductorFormOpen = !conductorFormOpen; conductorEditingId = null; renderConductoresScreen();
+    conductorFormOpen = !conductorFormOpen; conductorEditingId = null; drvDocsDraft = {}; renderConductoresScreen();
   };
   const buscarPl = ()=>{ plantillaBusqueda = document.getElementById('plBuscar').value; renderConductoresScreen(); };
   document.getElementById('plBuscarBtn').onclick = buscarPl;
@@ -4038,7 +4159,7 @@ function wireRrhhPlantilla(){
     el.onclick = ()=>{ rrhhFiltroRol = el.dataset.rolfiltro; renderConductoresScreen(); };
   });
   content.querySelectorAll('[data-editdrv]').forEach(btn=>{
-    btn.onclick = ()=>{ conductorEditingId = parseInt(btn.dataset.editdrv); conductorFormOpen = true; renderConductoresScreen(); };
+    btn.onclick = ()=>{ conductorEditingId = parseInt(btn.dataset.editdrv); conductorFormOpen = true; drvDocsDraft = {}; renderConductoresScreen(); };
   });
   content.querySelectorAll('[data-histdrv]').forEach(btn=>{
     btn.onclick = ()=>{
@@ -4056,6 +4177,35 @@ function wireRrhhPlantilla(){
   if(!conductorFormOpen) return;
 
   // el coche asignado solo tiene sentido para quien conduce
+  // discapacidad: el grado solo se pide si la respuesta es sí
+  const discapSel = document.getElementById('drvDiscap');
+  const syncDiscap = ()=>{
+    document.getElementById('drvDiscapGradoRow').style.display = discapSel.value==='si' ? '' : 'none';
+  };
+  discapSel.onchange = syncDiscap;
+  syncDiscap();
+
+  // documentación: se guarda en el borrador hasta que se confirme la ficha
+  content.querySelectorAll('[data-dockey]').forEach(inp=>{
+    inp.onchange = ()=>{
+      const file = inp.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        drvDocsDraft[inp.dataset.dockey] = ev.target.result;
+        const cont = inp.closest('.doc-slot');
+        const prev = cont.querySelector('.doc-thumb, .doc-empty');
+        if(prev){
+          const img = document.createElement('img');
+          img.src = ev.target.result; img.className = 'doc-thumb';
+          prev.replaceWith(img);
+        }
+        cont.querySelector('.doc-add').textContent = 'Cambiar';
+      };
+      reader.readAsDataURL(file);
+    };
+  });
+
   const rolSel = document.getElementById('drvRol');
   const syncVehicleRow = ()=>{
     document.getElementById('drvVehicleRow').style.display = rolSel.value==='Conductor' ? '' : 'none';
@@ -4084,13 +4234,18 @@ function wireRrhhPlantilla(){
       notas: document.getElementById('drvNotas').value.trim(),
       vehicleId: rol==='Conductor' && document.getElementById('drvVehicle').value
         ? parseInt(document.getElementById('drvVehicle').value) : null,
+      discapacidad: discapSel.value==='si',
+      discapacidadDetalle: discapSel.value==='si' ? document.getElementById('drvDiscapGrado').value.trim() : '',
     };
     if(conductorEditingId){
-      Object.assign(drivers.find(d=>d.id===conductorEditingId), datos);
+      const d = drivers.find(x=>x.id===conductorEditingId);
+      Object.assign(d, datos);
+      d.docs = Object.assign({}, d.docs||{}, drvDocsDraft);
       addLog(`Personal actualizado: ${nombre} (${rol})`, 'clear');
     } else {
       const nuevo = Object.assign({
-        id: nextDriverId++, diasTrabajados:0, diasBaja:0, diasLibres:0, diasAusencia:0
+        id: nextDriverId++, diasTrabajados:0, diasBaja:0, diasLibres:0, diasAusencia:0,
+        docs: Object.assign({}, drvDocsDraft)
       }, datos);
       drivers.push(nuevo);
       addHistorial({
@@ -4100,7 +4255,7 @@ function wireRrhhPlantilla(){
       });
       addLog(`Personal dado de alta: ${nombre} (${rol})`, 'clear');
     }
-    conductorFormOpen = false; conductorEditingId = null;
+    conductorFormOpen = false; conductorEditingId = null; drvDocsDraft = {};
     renderConductoresScreen();
   };
 }
@@ -4438,7 +4593,7 @@ function renderInformesScreen(){
           'Fecha': m.fecha, 'Hora': m.hora, 'Coche': v?v.plate:'', 'Flota': v?(v.flota||''):'',
           'Concepto': m.concepto, 'Lugar': m.lugar, 'Importe': m.importe, 'Puntos': m.puntos,
           'Responsable': m.responsableNombre, 'Tipo': m.responsableTipo,
-          'Motivo atribución': m.detalle, 'Estado': m.pagada?'Pagada':'Pendiente'
+          'Motivo atribución': m.detalle, 'Estado': m.estado||'Pendiente'
         };
       })), 'Multas');
     }
@@ -4683,7 +4838,7 @@ function buildHistorialItems(){
       centro: m.responsableTipo==='taller' ? m.responsableNombre : '',
       importe: m.importe||0,
       descripcion: `${m.concepto||'Multa'}${m.lugar?' · '+m.lugar:''} · responsable: ${m.responsableNombre}${m.puntos?` · −${m.puntos} pts`:''}`,
-      horas: null, notas: m.pagada?'Pagada':'Pendiente',
+      horas: null, notas: m.estado||'Pendiente',
       // una multa aparece tanto en la ficha del coche como en la del conductor
       scopes: m.driverId ? ['vehiculo','conductor'] : ['vehiculo']
     });
@@ -5120,7 +5275,7 @@ function exportHistorialPdf(items){
     const resp = responsableDeMulta(v.id, fechaStr, hora);
     fines.push({id: nextFineId++, vehicleId:v.id, fecha:fechaStr, hora, importe, puntos,
       concepto, lugar, responsableTipo:resp.tipo, responsableNombre:resp.nombre,
-      driverId:resp.driverId||null, detalle:resp.detalle, pagada:false});
+      driverId:resp.driverId||null, detalle:resp.detalle, estado:'Pendiente'});
   };
   mk(9, '11:20', 0, 'Exceso de velocidad', 100, 2, 'M-30 km 12');
   mk(4, '20:45', 1, 'Estacionamiento indebido', 90, 0, 'C/ Serrano');
@@ -5137,14 +5292,14 @@ function renderMultasScreen(){
 
   const qm = multasBusqueda.trim().toLowerCase();
   const lista = fines.slice().sort((a,b)=> (b.fecha+b.hora).localeCompare(a.fecha+a.hora)).filter(m=>{
-    if(multasFiltro==='pendiente' && m.pagada) return false;
+    if(multasFiltro==='pendiente' && m.estado!=='Pendiente') return false;
     if(multasFiltro!=='all' && multasFiltro!=='pendiente' && m.responsableTipo!==multasFiltro) return false;
     if(!qm) return true;
     const v = vehicles.find(x=>x.id===m.vehicleId);
     return `${v?v.plate:''} ${m.concepto||''} ${m.lugar||''} ${m.responsableNombre||''} ${m.fecha}`.toLowerCase().includes(qm);
   });
   const total = fines.reduce((s,m)=>s+(m.importe||0),0);
-  const pendiente = fines.filter(m=>!m.pagada).reduce((s,m)=>s+(m.importe||0),0);
+  const pendiente = fines.filter(m=>m.estado==='Pendiente').reduce((s,m)=>s+(m.importe||0),0);
 
   content.innerHTML = `
     <div class="sub-header">
@@ -5202,14 +5357,16 @@ function renderMultasScreen(){
         <div class="task-row">
           <div class="task-row-top">
             <span class="task-tipo">${m.concepto||'Multa'} · ${m.importe||0} €${m.puntos?` · −${m.puntos} pts`:''}</span>
-            <span class="amos-chip" style="color:${m.pagada?'var(--green)':'var(--red)'};background:${m.pagada?'var(--green)':'var(--red)'}22;">${m.pagada?'PAGADA':'PENDIENTE'}</span>
+            <span class="amos-chip" style="color:${MULTA_COLOR[m.estado]};background:${MULTA_COLOR[m.estado]}22;">${(m.estado||'Pendiente').toUpperCase()}</span>
           </div>
           <div class="task-meta">
             ${v?v.plate:'—'} · ${m.fecha.split('-').reverse().join('/')} ${m.hora}${m.lugar?' · '+m.lugar:''}<br>
             <strong>${m.responsableTipo==='taller'?'Taller':'Conductor'}:</strong> ${m.responsableNombre} <span style="color:var(--muted);">— ${m.detalle}</span>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="toggle-inactive-btn" data-mtpay="${m.id}">${m.pagada?'Marcar pendiente':'Marcar pagada'}</button>
+            <select class="cell-select mt-estado" data-mtestado="${m.id}" style="border:1px solid var(--border-strong);background:#fff;padding:6px 8px;font-size:12px;border-radius:8px;max-width:none;">
+              ${ESTADOS_MULTA.map(e=>`<option ${(m.estado||'Pendiente')===e?'selected':''}>${e}</option>`).join('')}
+            </select>
             <button class="task-del" data-mtdel="${m.id}">✕</button>
           </div>
         </div>`;
@@ -5261,7 +5418,7 @@ function renderMultasScreen(){
       responsableNombre: resp.nombre,
       driverId: resp.driverId || null,
       detalle: resp.detalle,
-      pagada: false,
+      estado: 'Pendiente',
     });
     const veh = vehicles.find(x=>x.id===parseInt(multasForm.vehicleId));
     addLog(`${veh?veh.plate:''} → multa registrada · responsable: ${resp.nombre}`, 'fault');
@@ -5275,10 +5432,13 @@ function renderMultasScreen(){
   content.querySelectorAll('[data-mtfilter]').forEach(el=>{
     el.onclick = ()=>{ multasFiltro = el.dataset.mtfilter; renderMultasScreen(); };
   });
-  content.querySelectorAll('[data-mtpay]').forEach(el=>{
-    el.onclick = ()=>{
-      const m = fines.find(x=>x.id===parseInt(el.dataset.mtpay));
-      if(m) m.pagada = !m.pagada;
+  content.querySelectorAll('[data-mtestado]').forEach(el=>{
+    el.onchange = ()=>{
+      const m = fines.find(x=>x.id===parseInt(el.dataset.mtestado));
+      if(!m) return;
+      m.estado = el.value;
+      const v = vehicles.find(x=>x.id===m.vehicleId);
+      addLog(`${v?v.plate:''} → multa ${m.estado.toLowerCase()}`, m.estado==='Pendiente'?'fault':'clear');
       renderMultasScreen();
     };
   });
@@ -6020,6 +6180,7 @@ function tick(){
       v.rpm = Math.round(randRange(750,3200));
       v.voltage = Math.round(randRange(133,144))/10;
       v.estimatedKm += v.speed * (2.2*SIM_KM_TIME_ACCEL/3600);
+      if(v.speed > 0) v.lastMovementAt = Date.now();
       v.runtimeSec = (v.runtimeSec||0) + Math.round(2.2*SIM_KM_TIME_ACCEL);
       v.kmSinceClear += v.speed * (2.2*SIM_KM_TIME_ACCEL/3600);
       if(v.dtcs.length>0) v.kmWithMil += v.speed * (2.2*SIM_KM_TIME_ACCEL/3600);
@@ -6044,6 +6205,7 @@ function tick(){
       addLog(`${v.plate} → nuevo código detectado: ${dtc.code} (${dtc.desc})`, 'fault');
     }
   });
+  revisarAlertasParado();
   refreshMapMarkers();
   if(screen==='map') renderMapSelectedBar();
   if(screen==='mantenimiento') renderScreen();

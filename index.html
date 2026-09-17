@@ -148,13 +148,13 @@
 
   /* ---- Previsión de flota — ventana estilo tabla AMOS ---- */
   .amos-window{background:var(--panel);border-radius:12px;overflow:hidden;border:1px solid var(--border);margin:12px;box-shadow:var(--shadow-md);display:flex;flex-direction:column;min-height:0;}
-  .amos-titlebar{background:linear-gradient(180deg,#1B2333,#141B29);color:#fff;padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
-  .filter-titlebar{background:#c0392b;color:#fff;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-align:center;}
-  .filter-bar{display:flex;background:#eef2f8;padding:8px 6px;border-bottom:1px solid #b9c6d6;overflow-x:auto;gap:0;}
-  .filter-group{display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 12px;border-right:1px solid #c3cedd;flex:0 0 auto;}
+  .amos-titlebar{background:linear-gradient(180deg,#1B2333,#141B29);color:#fff;padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+  .filter-titlebar{background:#c0392b;color:#fff;padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-align:center;flex:0 0 auto;}
+  .filter-bar{display:flex;flex-wrap:wrap;align-items:stretch;background:#eef2f8;padding:8px 6px;border-bottom:1px solid #b9c6d6;overflow-x:auto;gap:2px 0;flex:0 0 auto;}
+  .filter-group{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:3px 12px;border-right:1px solid #c3cedd;flex:0 0 auto;min-height:44px;}
   .filter-group-label{font-size:8.5px;font-weight:700;color:#41547a;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
   .filter-group-or{font-size:7.5px;color:#9aa5b8;font-style:italic;border-bottom:1px solid #c3cedd;padding:0 10px 2px;margin-bottom:1px;}
-  .filter-chip-row{display:flex;gap:4px;flex-wrap:nowrap;justify-content:center;}
+  .filter-chip-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:420px;}
   .filter-chip{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:32px;height:25px;padding:0 9px;border-radius:99px;background:var(--chip-color);color:#fff;font-size:9px;font-weight:600;letter-spacing:0.04em;cursor:pointer;border:none;white-space:nowrap;box-shadow:var(--shadow-sm);transition:opacity .15s;}
   .filter-chip-icon{width:13px;height:13px;flex-shrink:0;}
   .filter-chip.off{background:#e4e8ee;color:#9aa5b8;border-color:#d5dae2;}
@@ -191,7 +191,7 @@
   .colfilter-only{font-size:9.5px;color:#8a97ad;cursor:pointer;white-space:nowrap;text-decoration:underline;}
   .amos-table tr:nth-child(even) td{background:#f4f7fb;}
   .amos-chip{font-size:8.5px;font-weight:600;padding:1px 7px;border-radius:99px;letter-spacing:0.02em;}
-  .amos-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#dbe4f0;border-top:1px solid #b9c6d6;gap:8px;}
+  .amos-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#dbe4f0;border-top:1px solid #b9c6d6;gap:8px;flex:0 0 auto;}
   .amos-count{font-size:10.5px;color:#41547a;}
   .amos-export-btn{background:#1e7d3c;color:#fff;border:none;border-radius:6px;padding:8px 13px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font-display);}
   .amos-plate-cell{transform:scale(0.82);transform-origin:left center;}
@@ -676,6 +676,12 @@
   .tn-plate{position:sticky;left:104px;background:var(--panel);z-index:2;font-family:var(--font-mono);font-size:10px;font-weight:700;padding:0 9px;white-space:nowrap;color:var(--text);}
   .tn-flota{position:sticky;left:178px;background:var(--panel);z-index:2;font-size:10px;padding:0 9px;white-space:nowrap;color:var(--muted);border-right:2px solid var(--border-strong) !important;}
   .tn-sticky-3{border-right:2px solid var(--border-strong) !important;}
+  .hist-select{font-family:var(--font-display);font-size:10px;border:1px solid #c3cedd;border-radius:5px;padding:3px 5px;background:#fff;color:#1a2b45;max-width:132px;}
+  .hist-select:focus{outline:none;border-color:var(--orange);}
+  .rrhh-tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--border);}
+  .rrhh-tab{padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .rrhh-tab:hover{color:var(--text);}
+  .rrhh-tab.on{color:var(--orange);border-bottom-color:var(--orange);}
   .multas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;}
   .multas-result{border-radius:9px;padding:11px 13px;margin:2px 0 11px;border:1px solid;}
   .multas-result.conductor{background:#EFF6FF;border-color:#BFDBFE;}
@@ -970,11 +976,34 @@ let nextVehicleId = vehicles.length;
 const TURNOS = ['Mañana', 'Tarde', 'Noche', 'Partido'];
 const ESTADOS_CONDUCTOR = ['Activo', 'Vacaciones', 'Librando', 'Baja laboral'];
 let nextDriverId = 1;
+// ---- Recursos humanos: toda la plantilla, no solo conductores ----
+const ROLES_PERSONAL = ['Conductor', 'Mecánico', 'Administrativo', 'Secretario/a', 'Comercial', 'Jefe de taller', 'Otros'];
+const ROL_CANDIDATO = 'Candidato';
+const ROL_COLOR = {
+  'Conductor':'#1B4DE4', 'Mecánico':'#C8841C', 'Administrativo':'#0E7490',
+  'Secretario/a':'#6D4AC4', 'Comercial':'#0B7A55', 'Jefe de taller':'#92400E',
+  'Otros':'#6B7280', 'Candidato':'#334155'
+};
+// `drivers` guarda a todo el personal; quien conduce lleva rol 'Conductor'
 let drivers = [
-  {id: nextDriverId++, nombre:'Javier R.', telefono:'600 111 222', direccion:'C/ Mayor 12, Madrid', turno:'Mañana', vehicleId: vehicles[0].id, estado:'Activo', diasTrabajados:182, diasBaja:4, diasLibres:46, diasAusencia:1},
-  {id: nextDriverId++, nombre:'Marta S.', telefono:'600 222 333', direccion:'C/ Alcalá 45, Madrid', turno:'Tarde', vehicleId: vehicles[1].id, estado:'Activo', diasTrabajados:175, diasBaja:12, diasLibres:44, diasAusencia:0},
-  {id: nextDriverId++, nombre:'Ahmed K.', telefono:'600 333 444', direccion:'Av. América 8, Madrid', turno:'Noche', vehicleId: vehicles[2].id, estado:'Librando', diasTrabajados:168, diasBaja:2, diasLibres:52, diasAusencia:3},
+  {id: nextDriverId++, nombre:'Javier R.', rol:'Conductor', telefono:'600 111 222', direccion:'C/ Mayor 12, Madrid', turno:'Mañana', vehicleId: vehicles[0].id, estado:'Activo', diasTrabajados:182, diasBaja:4, diasLibres:46, diasAusencia:1, horario:'', altaFecha:'2023-02-01', email:'', notas:''},
+  {id: nextDriverId++, nombre:'Marta S.', rol:'Conductor', telefono:'600 222 333', direccion:'C/ Alcalá 45, Madrid', turno:'Tarde', vehicleId: vehicles[1].id, estado:'Activo', diasTrabajados:175, diasBaja:12, diasLibres:44, diasAusencia:0, horario:'', altaFecha:'2023-06-15', email:'', notas:''},
+  {id: nextDriverId++, nombre:'Ahmed K.', rol:'Conductor', telefono:'600 333 444', direccion:'Av. América 8, Madrid', turno:'Noche', vehicleId: vehicles[2].id, estado:'Librando', diasTrabajados:168, diasBaja:2, diasLibres:52, diasAusencia:3, horario:'', altaFecha:'2024-01-08', email:'', notas:''},
+  {id: nextDriverId++, nombre:'Raúl G.', rol:'Mecánico', telefono:'600 555 111', direccion:'C/ Toledo 9, Madrid', turno:'Mañana', vehicleId:null, estado:'Activo', diasTrabajados:190, diasBaja:0, diasLibres:48, diasAusencia:0, horario:'08:00–16:00', altaFecha:'2022-09-01', email:'raul@taller.es', notas:'Especialista en diagnosis'},
+  {id: nextDriverId++, nombre:'Lucía F.', rol:'Administrativo', telefono:'600 555 222', direccion:'C/ Goya 30, Madrid', turno:'Mañana', vehicleId:null, estado:'Vacaciones', diasTrabajados:178, diasBaja:3, diasLibres:50, diasAusencia:0, horario:'09:00–17:00', altaFecha:'2023-03-20', email:'lucia@taller.es', notas:'Facturación y nóminas'},
+  {id: nextDriverId++, nombre:'Diego V.', rol:'Comercial', telefono:'600 555 333', direccion:'Av. Burgos 12, Madrid', turno:'Partido', vehicleId:null, estado:'Activo', diasTrabajados:171, diasBaja:1, diasLibres:47, diasAusencia:2, horario:'10:00–14:00 / 16:00–20:00', altaFecha:'2024-05-02', email:'diego@taller.es', notas:''},
 ];
+// Atajo: solo quienes conducen entran en turnos, multas y asignación de coche
+function conductores(){ return drivers.filter(d=>d.rol==='Conductor'); }
+
+// ---- Candidatos: currículums recibidos ----
+let nextCandidatoId = 1;
+let candidatos = [
+  {id: nextCandidatoId++, nombre:'Sergio P.', puesto:'Conductor', telefono:'611 222 333', email:'sergio.p@mail.com', fechaCV:'2026-08-21', fuente:'Recomendación', notas:'5 años de taxi, licencia BTP', estado:'Recibido', cvArchivo:''},
+  {id: nextCandidatoId++, nombre:'Nuria B.', puesto:'Administrativo', telefono:'622 333 444', email:'nuria.b@mail.com', fechaCV:'2026-09-02', fuente:'InfoJobs', notas:'Experiencia en gestoría', estado:'En proceso', cvArchivo:''},
+  {id: nextCandidatoId++, nombre:'Iván M.', puesto:'Mecánico', telefono:'633 444 555', email:'ivan.m@mail.com', fechaCV:'2026-09-10', fuente:'Entrega en mano', notas:'FP Automoción, sin experiencia', estado:'Recibido', cvArchivo:''},
+];
+const ESTADOS_CANDIDATO = ['Recibido', 'En proceso', 'Entrevistado', 'Contratado', 'Descartado'];
 // Turnos asignados: una entrada por conductor y día concreto del mes
 const DIAS_SEMANA = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const TURNO_OPCIONES = ['—','M','T','N','P','L'];
@@ -987,7 +1016,7 @@ function diasDelMes(y, m){ return new Date(y, m+1, 0).getDate(); }
 // Reparto inicial de ejemplo para el mes en curso
 (function seedShifts(){
   const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
-  drivers.forEach(d=>{
+  conductores().forEach(d=>{
     const base = d.turno==='Mañana' ? 'M' : d.turno==='Tarde' ? 'T' : d.turno==='Noche' ? 'N' : 'P';
     for(let day=1; day<=diasDelMes(y,m); day++){
       const dow = new Date(y,m,day).getDay(); // 0 = domingo
@@ -1299,6 +1328,7 @@ function attemptLogin(){
   if(user){
     loggedIn = true; currentUser = user; loginError=''; loginView='menu'; screen='home';
     loadColConfig();  // cada usuario recupera su propia configuración de columnas
+    histLoadColConfig();
     addLog(`Sesión iniciada como ${user.username} (${user.profile})`, 'clear');
     renderScreen();
   } else {
@@ -1358,17 +1388,19 @@ function renderHome(){
         <div class="home-hero-sub">${vehicles.length} vehículos en flota · ${activeAlerts} con avería activa</div>
       </div>
       <div class="bento-grid">
-        ${bentoCard('goVehBtn', 'big', '#1B4DE4', 'Vehículos', 'Buscar matrícula, tareas y alta de vehículos', vehicles.length)}
-        ${bentoCard('goForecastBtn', 'big', '#C8841C', 'Previsión de flota', 'Tareas, revisiones, ITV y seguros', dueCount)}
-        ${bentoCard('goMantBtn', 'small', '#0B7A55', 'Escáner', 'Códigos, datos en vivo, diagnosis', activeAlerts)}
-        ${bentoCard('goEventosBtn', 'small', '#6D4AC4', 'Eventos', 'Crear ITV, seguro, revisión, cita...', null)}
-        ${bentoCard('goMapBtn', 'small', '#0E7490', 'Mapa flota', 'Posición en tiempo real', null)}
-        ${bentoCard('goConductoresBtn', 'small', '#334155', 'Conductores', 'Alta, coche asignado, estado', driversActive)}
-        ${bentoCard('goTurnosBtn', 'small', '#0F766E', 'Turnos', 'Cuadrante semanal y rotaciones', null)}
-        ${bentoCard('goLiveBtn', 'small', '#B00020', 'Eventos en vivo', 'Consola de actividad de la flota', logEntries.length)}
-        ${bentoCard('goMultasBtn', 'small', '#92400E', 'Multas', 'Registrar y atribuir responsable', fines.length||null)}
-        ${bentoCard('goDamageBtn', 'small', '#C0223B', 'Daños', 'Diagrama 2D y estado del coche', damagePointsTotal)}
-        ${bentoCard('goInformesBtn', 'small', '#475569', 'Informes', 'Resumen de flota y mantenimiento', null)}
+        ${bentoCard('goForecastBtn', 'big', '#1B4DE4', 'Previsión de flota', 'ITV, seguros, revisiones y vencimientos', dueCount)}
+        ${bentoCard('goTurnosBtn', 'small', '#0F766E', 'Turnos', 'Cuadrante mensual y rotaciones', null)}
+        ${bentoCard('goHistorialBtn', 'small', '#1E3A5F', 'Histórico', 'Eventos ya cerrados', historial.length)}
+        ${bentoCard('goMantBtn', 'small', '#0B7A55', 'Escáner', 'Códigos y diagnosis', activeAlerts)}
+        ${bentoCard('goDamageBtn', 'small', '#C0223B', 'Daños', 'Diagrama y carrocería', damagePointsTotal)}
+        ${bentoCard('goEventosBtn', 'small', '#6D4AC4', 'Eventos', 'Crear ITV, seguro, revisión...', null)}
+        ${bentoCard('goVehBtn', 'small', '#334155', 'Coches', 'Matrículas, tareas y alta', vehicles.length)}
+        ${bentoCard('goConductoresBtn', 'small', '#475569', 'Recursos Humanos', 'Plantilla, horarios y candidatos', drivers.length)}
+        ${bentoCard('goCentrosBtn', 'small', '#7C3AED', 'Centros', 'Talleres, ITV y proveedores', centros.length)}
+        ${bentoCard('goLiveBtn', 'small', '#B00020', 'Datos en vivo', 'Actividad de la flota', logEntries.length)}
+        ${bentoCard('goMapBtn', 'small', '#0E7490', 'Mapa', 'Posición en tiempo real', null)}
+        ${bentoCard('goMultasBtn', 'small', '#92400E', 'Multas', 'Registrar y atribuir', fines.length||null)}
+        ${bentoCard('goInformesBtn', 'big', '#1F2937', 'Informes', 'Resumen de flota, costes y jornadas', null)}
       </div>
     </div>
   `;
@@ -1466,16 +1498,18 @@ function gaugeSVG(value, max, dangerFrom, unitLabel, subLabel){
 }
 
 const HOME_MODULES = [
-  {id:'goVehBtn',       name:'Vehículos',          desc:'Buscar matrícula, tareas y alta',        keys:'vehiculos coches flota alta matricula'},
-  {id:'goForecastBtn',  name:'Previsión de flota', desc:'ITV, seguros, revisiones y vencimientos',keys:'prevision planificacion itv seguro revision vencimientos'},
-  {id:'goEventosBtn',   name:'Eventos',            desc:'Crear ITV, seguro, revisión, cita',      keys:'eventos crear cita venta'},
-  {id:'goMantBtn',      name:'Escáner',            desc:'Códigos de avería y datos en vivo',      keys:'escaner obd averia dtc diagnosis codigos'},
-  {id:'goMapBtn',       name:'Mapa de flota',      desc:'Posición de los coches en tiempo real',  keys:'mapa gps posicion ubicacion'},
-  {id:'goConductoresBtn',name:'Conductores',       desc:'Alta, coche asignado y estado',          keys:'conductores chofer plantilla'},
-  {id:'goTurnosBtn',    name:'Turnos',             desc:'Cuadrante semanal y rotaciones',         keys:'turnos cuadrante rotacion descansos horarios'},
-  {id:'goLiveBtn',      name:'Eventos en vivo',    desc:'Consola de actividad de la flota',       keys:'eventos vivo live consola registro log actividad'},
-  {id:'goMultasBtn',    name:'Multas',             desc:'Registrar multas y buscar responsable',  keys:'multas sanciones trafico dgt puntos responsable'},
+  {id:'goForecastBtn',  name:'Previsión de flota', desc:'ITV, seguros, revisiones y vencimientos', keys:'prevision planificacion itv seguro revision vencimientos'},
+  {id:'goTurnosBtn',    name:'Turnos',             desc:'Cuadrante mensual y rotaciones',         keys:'turnos cuadrante rotacion descansos horarios'},
+  {id:'goHistorialBtn', name:'Histórico',          desc:'Eventos cerrados por coche o conductor', keys:'historial historico pasado archivo registro cerrados'},
+  {id:'goMantBtn',      name:'Escáner',            desc:'Códigos de avería y diagnosis',          keys:'escaner obd averia dtc diagnosis codigos'},
   {id:'goDamageBtn',    name:'Daños',              desc:'Diagrama 2D y estado de carrocería',     keys:'daños golpes carroceria chapa'},
+  {id:'goEventosBtn',   name:'Eventos',            desc:'Crear ITV, seguro, revisión, cita',      keys:'eventos crear cita venta'},
+  {id:'goVehBtn',       name:'Coches',             desc:'Buscar matrícula, tareas y alta',        keys:'coches vehiculos flota alta matricula'},
+  {id:'goConductoresBtn',name:'Recursos Humanos',  desc:'Plantilla, puestos, horarios y candidatos', keys:'recursos humanos rrhh personal conductores mecanicos administrativo candidatos cv plantilla'},
+  {id:'goCentrosBtn',   name:'Centros',            desc:'Talleres, ITV y otros proveedores',      keys:'centros talleres itv proveedores garaje'},
+  {id:'goLiveBtn',      name:'Datos en vivo',      desc:'Consola de actividad de la flota',       keys:'datos vivo live consola registro log actividad'},
+  {id:'goMapBtn',       name:'Mapa',               desc:'Posición de los coches en tiempo real',  keys:'mapa gps posicion ubicacion'},
+  {id:'goMultasBtn',    name:'Multas',             desc:'Registrar multas y buscar responsable',  keys:'multas sanciones trafico dgt puntos responsable'},
   {id:'goInformesBtn',  name:'Informes',           desc:'Resumen de flota y mantenimiento',       keys:'informes estadisticas resumen excel'},
 ];
 
@@ -1602,17 +1636,19 @@ function renderHomeEditorial(activeAlerts, dueCount, driversActive, damagePoints
       </div>
 
       <div class="ed-list">
-        ${row('goVehBtn','01','Vehículos', `${vehicles.length} en flota`)}
-        ${row('goForecastBtn','02','Previsión de flota', dueCount?`${dueCount} próximos`:'al día', dueCount>0)}
-        ${row('goEventosBtn','03','Eventos', 'crear nuevo')}
+        ${row('goForecastBtn','01','Previsión de flota', dueCount?`${dueCount} próximos`:'al día', dueCount>0)}
+        ${row('goTurnosBtn','02','Turnos', 'cuadrante mensual')}
+        ${row('goHistorialBtn','03','Histórico', `${historial.length} cerrados`)}
         ${row('goMantBtn','04','Escáner', activeAlerts?`${activeAlerts} con avería`:'sin códigos', activeAlerts>0)}
-        ${row('goMapBtn','05','Mapa de flota', 'tiempo real')}
-        ${row('goConductoresBtn','06','Conductores', `${driversActive} activos`)}
-        ${row('goTurnosBtn','07','Turnos', 'cuadrante semanal')}
-        ${row('goLiveBtn','08','Eventos en vivo', `${logEntries.length} registros`)}
-        ${row('goMultasBtn','09','Multas', fines.length?`${fines.length} registradas`:'ninguna')}
-        ${row('goDamageBtn','10','Daños', damagePointsTotal?`${damagePointsTotal} marcados`:'sin registrar')}
-        ${row('goInformesBtn','11','Informes', 'resumen')}
+        ${row('goDamageBtn','05','Daños', damagePointsTotal?`${damagePointsTotal} marcados`:'sin registrar')}
+        ${row('goEventosBtn','06','Eventos', 'crear nuevo')}
+        ${row('goVehBtn','07','Coches', `${vehicles.length} en flota`)}
+        ${row('goConductoresBtn','08','Recursos Humanos', `${drivers.length} en plantilla`)}
+        ${row('goCentrosBtn','09','Centros', `${centros.length} dados de alta`)}
+        ${row('goLiveBtn','10','Datos en vivo', `${logEntries.length} registros`)}
+        ${row('goMapBtn','11','Mapa', 'tiempo real')}
+        ${row('goMultasBtn','12','Multas', fines.length?`${fines.length} registradas`:'ninguna')}
+        ${row('goInformesBtn','13','Informes', 'resumen')}
       </div>
     </div>
   `;
@@ -1651,17 +1687,19 @@ function renderHomeDashboard(activeAlerts, dueCount, driversActive, damagePoints
         </div>
       </div>
       <div class="dash-tile-grid">
-        ${dashTile('goVehBtn', 'big', '#4FA8FF', 'Vehículos', 'Buscar matrícula, tareas y alta de vehículos')}
-        ${dashTile('goForecastBtn', 'big', '#FF9A3D', 'Previsión de flota', 'Tareas, revisiones, ITV y seguros')}
-        ${dashTile('goMantBtn', 'small', '#FF6B4A', 'Escáner', 'Códigos, datos en vivo, diagnosis')}
-        ${dashTile('goEventosBtn', 'small', '#C08CFF', 'Eventos', 'Crear ITV, seguro, revisión, cita...')}
-        ${dashTile('goMapBtn', 'small', '#5FE07E', 'Mapa flota', 'Posición en tiempo real')}
-        ${dashTile('goConductoresBtn', 'small', '#B7C4D6', 'Conductores', 'Alta, coche asignado, estado')}
-        ${dashTile('goTurnosBtn', 'small', '#5FD0C4', 'Turnos', 'Cuadrante semanal y rotaciones')}
-        ${dashTile('goLiveBtn', 'small', '#FF5C5C', 'Eventos en vivo', 'Consola de actividad de la flota')}
-        ${dashTile('goMultasBtn', 'small', '#E0A860', 'Multas', 'Registrar y atribuir responsable')}
-        ${dashTile('goDamageBtn', 'small', '#FF5C5C', 'Daños', 'Diagrama 2D y estado del coche')}
-        ${dashTile('goInformesBtn', 'small', '#8FA6C9', 'Informes', 'Resumen de flota y mantenimiento')}
+        ${dashTile('goForecastBtn', 'big', '#FF9A3D', 'Previsión de flota', 'ITV, seguros, revisiones y vencimientos')}
+        ${dashTile('goTurnosBtn', 'small', '#5FD0C4', 'Turnos', 'Cuadrante mensual y rotaciones')}
+        ${dashTile('goHistorialBtn', 'small', '#9FB6D6', 'Histórico', 'Eventos ya cerrados')}
+        ${dashTile('goMantBtn', 'small', '#FF6B4A', 'Escáner', 'Códigos y diagnosis')}
+        ${dashTile('goDamageBtn', 'small', '#FF5C5C', 'Daños', 'Diagrama y carrocería')}
+        ${dashTile('goEventosBtn', 'small', '#C08CFF', 'Eventos', 'Crear ITV, seguro, revisión...')}
+        ${dashTile('goVehBtn', 'small', '#4FA8FF', 'Coches', 'Matrículas, tareas y alta')}
+        ${dashTile('goConductoresBtn', 'small', '#B7C4D6', 'Recursos Humanos', 'Plantilla, horarios y candidatos')}
+        ${dashTile('goCentrosBtn', 'small', '#C4A6FF', 'Centros', 'Talleres, ITV y proveedores')}
+        ${dashTile('goLiveBtn', 'small', '#FF8A8A', 'Datos en vivo', 'Actividad de la flota')}
+        ${dashTile('goMapBtn', 'small', '#5FE07E', 'Mapa', 'Posición en tiempo real')}
+        ${dashTile('goMultasBtn', 'small', '#E0A860', 'Multas', 'Registrar y atribuir')}
+        ${dashTile('goInformesBtn', 'small', '#8FA6C9', 'Informes', 'Resumen de flota')}
       </div>
     </div>
   `;
@@ -1675,6 +1713,8 @@ function wireHomeButtons(){
   const tb=document.getElementById('goTurnosBtn'); if(tb) tb.onclick = ()=>{ screen='turnos'; renderScreen(); };
   const lb=document.getElementById('goLiveBtn'); if(lb) lb.onclick = ()=>{ screen='eventoslive'; renderScreen(); };
   const mb=document.getElementById('goMultasBtn'); if(mb) mb.onclick = ()=>{ screen='multas'; renderScreen(); };
+  const hb=document.getElementById('goHistorialBtn'); if(hb) hb.onclick = ()=>{ screen='historial'; renderScreen(); };
+  const cb=document.getElementById('goCentrosBtn'); if(cb) cb.onclick = ()=>{ screen='centros'; centroFormOpen=false; renderScreen(); };
   document.getElementById('goInformesBtn').onclick = ()=>{ screen='informes'; renderScreen(); };
   document.getElementById('goMapBtn').onclick = ()=>{ screen='map'; renderScreen(); };
   document.getElementById('goMantBtn').onclick = ()=>{ screen='mantenimiento'; selectedId=null; pickerOpen.mant=true; scannerMenu='root'; showAssistant=false; renderScreen(); };
@@ -2142,7 +2182,7 @@ function filterChip(col, value, label, color, icon){
   return `<span class="filter-chip ${off?'off':''}" data-chipcol="${col}" data-chipval="${value}" style="--chip-color:${color};">${svg}${label}</span>`;
 }
 function conductoresDe(v){
-  const asignados = drivers.filter(d=>d.vehicleId===v.id).map(d=>`${d.nombre} (${d.turno})`);
+  const asignados = conductores().filter(d=>d.vehicleId===v.id).map(d=>`${d.nombre} (${d.turno})`);
   const libres = (v.conductores||[]).filter(c=>typeof c === 'string' && c.trim());
   const todos = [...new Set([...asignados, ...libres])];
   return todos.length ? todos.join(', ') : '—';
@@ -2183,7 +2223,7 @@ function colValue(it, col){
   if(col==='dueno') return it.v.dueno || '—';
   if(col==='respCoche') return it.v.responsable || '—';
   if(col==='conductor'){
-    const d = drivers.find(x=>x.vehicleId===it.v.id);
+    const d = conductores().find(x=>x.vehicleId===it.v.id);
     return d ? d.nombre : '—';
   }
   return '';
@@ -2239,6 +2279,13 @@ let forecastExtendingTaskId = null;
 let forecastExtendForm = {fechaLimite:'', fechaPreaviso:'', kmLimite:''};
 
 function completeTask(v, t, newVals){
+  addHistorial({
+    tipo: t.tipo, ambito:'vehiculo', vehicleId: v.id,
+    centro: t.centro || '', importe: t.costeReal!=null ? t.costeReal : (t.costeEstimado||0),
+    descripcion: `${t.tipo} realizada${t.centro?' en '+t.centro:''}`,
+    horas: t.horasParado || null, notas: t.notas || '',
+    driverId: (conductores().find(d=>d.vehicleId===v.id)||{}).id || null,
+  });
   if(t.limiteType==='km'){ t.kmLimite = newVals.kmLimite; }
   else { t.fechaLimite = newVals.fechaLimite; t.fechaPreaviso = newVals.fechaPreaviso; }
   addLog(`${v.plate} → "${t.tipo}" — reporting back: evento cerrado, siguiente programado`, 'clear');
@@ -2588,7 +2635,7 @@ function renderForecastScreen(){
           <div class="filter-group-label">Conductor</div>
           <div class="filter-group-or">OR</div>
           <div class="filter-chip-row">
-            ${[...new Set(drivers.map(d=>d.nombre))].sort().map((n,i)=>filterChip('conductor', n, shortLabel(n,9), paletteFor(i+2), ICON_CONDUCTOR)).join('')}
+            ${[...new Set(conductores().map(d=>d.nombre))].sort().map((n,i)=>filterChip('conductor', n, shortLabel(n,9), paletteFor(i+2), ICON_CONDUCTOR)).join('')}
             ${filterChip('conductor','—','S/ASIG','#6B7280', ICON_CONDUCTOR)}
           </div>
         </div>
@@ -3718,124 +3765,343 @@ function renderDamageScreen(){
 }
 
 
-// ============ PANTALLA: CONDUCTORES ============
+// ============ PANTALLA: RECURSOS HUMANOS ============
+let rrhhTab = 'plantilla';        // 'plantilla' | 'candidatos'
+let rrhhFiltroRol = 'all';
 let conductorFormOpen = false;
 let conductorEditingId = null;
+let candidatoFormOpen = false;
+let candidatoEditingId = null;
+let candidatoBusqueda = '';
+
 function renderConductoresScreen(){
   const content = document.getElementById('content');
   content.classList.remove('no-pad');
+  content.innerHTML = rrhhTab==='plantilla' ? rrhhPlantillaHTML() : rrhhCandidatosHTML();
+  wireRrhhComun();
+  if(rrhhTab==='plantilla') wireRrhhPlantilla(); else wireRrhhCandidatos();
+}
+
+function rrhhTabsHTML(){
+  return `
+    <div class="rrhh-tabs">
+      <span class="rrhh-tab ${rrhhTab==='plantilla'?'on':''}" data-rrhhtab="plantilla">Plantilla (${drivers.length})</span>
+      <span class="rrhh-tab ${rrhhTab==='candidatos'?'on':''}" data-rrhhtab="candidatos">Candidatos (${candidatos.length})</span>
+    </div>`;
+}
+
+function rrhhPlantillaHTML(){
+  const editing = conductorEditingId ? drivers.find(d=>d.id===conductorEditingId) : null;
+  const esConductor = editing ? editing.rol==='Conductor' : true;
+  const lista = drivers.filter(d=> rrhhFiltroRol==='all' || d.rol===rrhhFiltroRol);
+  const estadoColor = {Activo:'var(--green)', Vacaciones:'var(--orange)', Librando:'#6B7280', 'Baja laboral':'var(--red)'};
 
   const formHTML = !conductorFormOpen ? '' : `
     <div class="reg-form">
-      <div class="form-row"><label>Nombre</label><input type="text" id="drvNombre" placeholder="Nombre y apellido"></div>
-      <div class="form-row"><label>Teléfono</label><input type="tel" id="drvTelefono" placeholder="600 000 000"></div>
-      <div class="form-row"><label>Dirección (obligatorio)</label><input type="text" id="drvDireccion" placeholder="Calle, número, ciudad"></div>
-      <div class="form-row"><label>Turno</label>
-        <select id="drvTurno">${TURNOS.map(t=>`<option>${t}</option>`).join('')}</select>
+      <div class="multas-grid">
+        <div class="form-row"><label>Nombre</label><input type="text" id="drvNombre" value="${editing?editing.nombre:''}" placeholder="Nombre y apellido"></div>
+        <div class="form-row"><label>Puesto</label>
+          <select id="drvRol">${ROLES_PERSONAL.map(r=>`<option ${editing&&editing.rol===r?'selected':(!editing&&r==='Conductor'?'selected':'')}>${r}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Teléfono</label><input type="tel" id="drvTelefono" value="${editing?editing.telefono:''}" placeholder="600 000 000"></div>
+        <div class="form-row"><label>Email</label><input type="email" id="drvEmail" value="${editing?(editing.email||''):''}" placeholder="correo@empresa.es"></div>
+        <div class="form-row" style="grid-column:1/-1;"><label>Dirección (obligatorio)</label><input type="text" id="drvDireccion" value="${editing?editing.direccion:''}" placeholder="Calle, número, ciudad"></div>
+        <div class="form-row"><label>Fecha de alta</label><input type="date" id="drvAlta" value="${editing?(editing.altaFecha||''):''}"></div>
+        <div class="form-row"><label>Estado</label>
+          <select id="drvEstado">${ESTADOS_CONDUCTOR.map(e=>`<option ${editing&&editing.estado===e?'selected':''}>${e}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Turno</label>
+          <select id="drvTurno">${TURNOS.map(t=>`<option ${editing&&editing.turno===t?'selected':''}>${t}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Horario laboral</label><input type="text" id="drvHorario" value="${editing?(editing.horario||''):''}" placeholder="Ej: 09:00–17:00"></div>
+        <div class="form-row" id="drvVehicleRow" style="${esConductor?'':'display:none;'}"><label>Coche asignado</label>
+          <select id="drvVehicle">
+            <option value="">Sin asignar</option>
+            ${vehicles.map(v=>`<option value="${v.id}" ${editing&&editing.vehicleId===v.id?'selected':''}>${v.plate}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-row" style="grid-column:1/-1;"><label>Notas</label><input type="text" id="drvNotas" value="${editing?(editing.notas||''):''}" placeholder="Especialidad, observaciones..."></div>
       </div>
-      <div class="form-row"><label>Coche asignado</label>
-        <select id="drvVehicle">
-          <option value="">Sin asignar</option>
-          ${vehicles.map(v=>`<option value="${v.id}">${v.plate}</option>`).join('')}
-        </select>
-      </div>
-      <div class="form-row"><label>Estado</label>
-        <select id="drvEstado">${ESTADOS_CONDUCTOR.map(e=>`<option>${e}</option>`).join('')}</select>
-      </div>
-      ${conductorEditingId ? '<div id="drvFormError" style="color:var(--red);font-size:11.5px;display:none;margin-bottom:8px;"></div>' : '<div id="drvFormError" style="color:var(--red);font-size:11.5px;display:none;margin-bottom:8px;"></div>'}
-      <button class="save-btn" id="saveDriverBtn">${conductorEditingId?'Guardar cambios':'Dar de alta'}</button>
-    </div>
-  `;
+      <div id="drvFormError" style="color:var(--red);font-size:11.5px;display:none;margin-bottom:8px;"></div>
+      <button class="save-btn" id="saveDriverBtn">${editing?'Guardar cambios':'Dar de alta'}</button>
+    </div>`;
 
-  const estadoColor = {Activo:'var(--green)', Vacaciones:'var(--orange)', Librando:'#6B7280', 'Baja laboral':'var(--red)'};
-
-  content.innerHTML = `
+  return `
     <div class="sub-header">
-      <button class="back-btn" id="backBtn">← Volver</button>
-      <div class="sub-title">Conductores</div>
+      <button class="back-btn" id="backBtn">← Menú</button>
+      <div class="sub-title">Recursos Humanos</div>
     </div>
-    <div style="padding:16px;">
-      <button class="add-vehicle-btn" id="toggleDriverForm">${conductorFormOpen?'✕ Cancelar':'+ Dar de alta conductor'}</button>
+    <div style="padding:14px 16px;">
+      ${rrhhTabsHTML()}
+      <button class="add-vehicle-btn" id="toggleDriverForm">${conductorFormOpen?'✕ Cancelar':'+ Dar de alta personal'}</button>
       ${formHTML}
-      <div class="section-label" style="margin:14px 0 8px 2px;">Plantilla (${drivers.length})</div>
-      ${drivers.length===0 ? '<div style="color:var(--muted);font-size:12.5px;">Sin conductores dados de alta.</div>' : drivers.map(d=>{
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 10px;">
+        <span class="filter-chip ${rrhhFiltroRol==='all'?'':'off'}" data-rolfiltro="all" style="--chip-color:#41547a;">TODOS (${drivers.length})</span>
+        ${ROLES_PERSONAL.filter(r=>drivers.some(d=>d.rol===r)).map(r=>
+          `<span class="filter-chip ${rrhhFiltroRol===r?'':'off'}" data-rolfiltro="${r}" style="--chip-color:${ROL_COLOR[r]||'#6B7280'};">${r.toUpperCase()} (${drivers.filter(d=>d.rol===r).length})</span>`).join('')}
+      </div>
+      ${lista.length===0 ? '<div style="color:var(--muted);font-size:12.5px;">Sin personal con ese puesto.</div>' : lista.map(d=>{
         const v = vehicles.find(x=>x.id===d.vehicleId);
         const color = estadoColor[d.estado] || 'var(--muted)';
         return `
         <div class="task-row">
           <div class="task-row-top">
-            <span class="task-tipo">${d.nombre}</span>
+            <span class="task-tipo">${d.nombre} <span class="amos-chip" style="color:${ROL_COLOR[d.rol]||'#6B7280'};background:${(ROL_COLOR[d.rol]||'#6B7280')}18;">${d.rol}</span></span>
             <span class="amos-chip" style="color:${color};background:${color}22;border:1px solid ${color}55;">${d.estado}</span>
           </div>
           <div class="task-meta">
-            ${d.telefono || '—'} · ${d.direccion}<br>
-            Turno: ${d.turno} · Coche: ${v ? v.plate : 'sin asignar'}
+            ${d.telefono || '—'}${d.email?' · '+d.email:''} · ${d.direccion}<br>
+            ${d.rol==='Conductor' ? `Turno: ${d.turno} · Coche: ${v ? v.plate : 'sin asignar'}` : `Horario: ${d.horario || 'sin definir'}`}
+            ${d.altaFecha?` · Alta: ${d.altaFecha.split('-').reverse().join('/')}`:''}
+            ${d.notas?`<br><span style="color:var(--muted);">${d.notas}</span>`:''}
           </div>
           <div style="display:flex;gap:8px;margin-top:8px;">
             <button class="toggle-inactive-btn" data-editdrv="${d.id}">Editar</button>
+            <button class="toggle-inactive-btn" data-histdrv="${d.id}">Ver histórico</button>
             <button class="task-del" data-deldrv="${d.id}">✕</button>
           </div>
-        </div>
-      `;}).join('')}
-    </div>
-  `;
+        </div>`;
+      }).join('')}
+    </div>`;
+}
 
+function rrhhCandidatosHTML(){
+  const editing = candidatoEditingId ? candidatos.find(c=>c.id===candidatoEditingId) : null;
+  const q = candidatoBusqueda.trim().toLowerCase();
+  const lista = candidatos.filter(c=> !q || (`${c.nombre} ${c.puesto} ${c.notas} ${c.fuente} ${c.email}`).toLowerCase().includes(q));
+  const estadoColor = {Recibido:'#6B7280','En proceso':'#C8841C',Entrevistado:'#0E7490',Contratado:'#0B7A55',Descartado:'#C0223B'};
+
+  const formHTML = !candidatoFormOpen ? '' : `
+    <div class="reg-form">
+      <div class="multas-grid">
+        <div class="form-row"><label>Nombre</label><input type="text" id="cdNombre" value="${editing?editing.nombre:''}" placeholder="Nombre y apellido"></div>
+        <div class="form-row"><label>Puesto al que opta</label>
+          <select id="cdPuesto">${ROLES_PERSONAL.map(r=>`<option ${editing&&editing.puesto===r?'selected':''}>${r}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Teléfono</label><input type="tel" id="cdTelefono" value="${editing?editing.telefono:''}" placeholder="600 000 000"></div>
+        <div class="form-row"><label>Email</label><input type="email" id="cdEmail" value="${editing?editing.email:''}" placeholder="correo@mail.com"></div>
+        <div class="form-row"><label>Fecha de recepción del CV</label><input type="date" id="cdFecha" value="${editing?editing.fechaCV:toDateInputValue(new Date())}"></div>
+        <div class="form-row"><label>Procedencia</label><input type="text" id="cdFuente" value="${editing?editing.fuente:''}" placeholder="InfoJobs, recomendación, en mano..."></div>
+        <div class="form-row"><label>Estado</label>
+          <select id="cdEstado">${ESTADOS_CANDIDATO.map(e=>`<option ${editing&&editing.estado===e?'selected':''}>${e}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Archivo del CV</label><input type="file" id="cdArchivo" accept=".pdf,image/*"></div>
+        <div class="form-row" style="grid-column:1/-1;"><label>Notas y experiencia</label><input type="text" id="cdNotas" value="${editing?editing.notas:''}" placeholder="Experiencia, titulación, disponibilidad..."></div>
+      </div>
+      <div id="cdFormError" style="color:var(--red);font-size:11.5px;display:none;margin-bottom:8px;"></div>
+      <button class="save-btn" id="saveCandidatoBtn">${editing?'Guardar cambios':'Registrar CV'}</button>
+    </div>`;
+
+  return `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Menú</button>
+      <div class="sub-title">Recursos Humanos</div>
+    </div>
+    <div style="padding:14px 16px;">
+      ${rrhhTabsHTML()}
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Cada CV registrado genera un evento "CV" en el histórico, así que después puedes buscar candidatos por fecha, puesto o experiencia desde la sección Histórico.</div>
+      <button class="add-vehicle-btn" id="toggleCandidatoForm">${candidatoFormOpen?'✕ Cancelar':'+ Registrar CV recibido'}</button>
+      ${formHTML}
+      <div class="plate-lookup" style="margin-bottom:12px;">
+        <input type="text" id="cdBuscar" placeholder="Buscar por nombre, puesto o experiencia..." value="${candidatoBusqueda}">
+        <button id="cdBuscarBtn">Buscar</button>
+      </div>
+      ${lista.length===0 ? '<div style="color:var(--muted);font-size:12.5px;">Sin candidatos que coincidan.</div>' : lista.map(c=>{
+        const color = estadoColor[c.estado] || '#6B7280';
+        return `
+        <div class="task-row">
+          <div class="task-row-top">
+            <span class="task-tipo">${c.nombre} <span class="amos-chip" style="color:#334155;background:#33415518;">${c.puesto}</span></span>
+            <span class="amos-chip" style="color:${color};background:${color}22;border:1px solid ${color}55;">${c.estado}</span>
+          </div>
+          <div class="task-meta">
+            CV recibido el ${c.fechaCV.split('-').reverse().join('/')}${c.fuente?' · '+c.fuente:''}<br>
+            ${c.telefono||'—'}${c.email?' · '+c.email:''}
+            ${c.notas?`<br><span style="color:var(--muted);">${c.notas}</span>`:''}
+            ${c.cvArchivo?'<br><span style="color:var(--green);">Archivo adjunto</span>':''}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="toggle-inactive-btn" data-editcd="${c.id}">Editar</button>
+            ${c.estado!=='Contratado' ? `<button class="toggle-inactive-btn" data-hirecd="${c.id}">Contratar</button>` : ''}
+            <button class="task-del" data-delcd="${c.id}">✕</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function wireRrhhComun(){
   document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
-  document.getElementById('toggleDriverForm').onclick = ()=>{
-    conductorFormOpen = !conductorFormOpen;
-    conductorEditingId = null;
-    renderScreen();
-  };
-  if(conductorFormOpen){
-    if(conductorEditingId){
-      const d = drivers.find(x=>x.id===conductorEditingId);
-      document.getElementById('drvNombre').value = d.nombre;
-      document.getElementById('drvTelefono').value = d.telefono;
-      document.getElementById('drvDireccion').value = d.direccion;
-      document.getElementById('drvTurno').value = d.turno;
-      document.getElementById('drvVehicle').value = d.vehicleId || '';
-      document.getElementById('drvEstado').value = d.estado;
-    }
-    document.getElementById('saveDriverBtn').onclick = ()=>{
-      const nombre = document.getElementById('drvNombre').value.trim();
-      const direccion = document.getElementById('drvDireccion').value.trim();
-      const errorEl = document.getElementById('drvFormError');
-      if(!nombre || !direccion){
-        errorEl.textContent = 'Nombre y dirección son obligatorios.';
-        errorEl.style.display = 'block';
-        return;
-      }
-      const telefono = document.getElementById('drvTelefono').value.trim();
-      const turno = document.getElementById('drvTurno').value;
-      const vehicleId = document.getElementById('drvVehicle').value ? parseInt(document.getElementById('drvVehicle').value) : null;
-      const estado = document.getElementById('drvEstado').value;
-      if(conductorEditingId){
-        const d = drivers.find(x=>x.id===conductorEditingId);
-        Object.assign(d, {nombre, telefono, direccion, turno, vehicleId, estado});
-        addLog(`Conductor actualizado: ${nombre}`, 'clear');
-      } else {
-        drivers.push({id: nextDriverId++, nombre, telefono, direccion, turno, vehicleId, estado});
-        addLog(`Conductor dado de alta: ${nombre}`, 'clear');
-      }
-      conductorFormOpen = false;
-      conductorEditingId = null;
-      renderScreen();
+  document.querySelectorAll('[data-rrhhtab]').forEach(el=>{
+    el.onclick = ()=>{
+      rrhhTab = el.dataset.rrhhtab;
+      conductorFormOpen=false; conductorEditingId=null;
+      candidatoFormOpen=false; candidatoEditingId=null;
+      renderConductoresScreen();
     };
-  }
+  });
+}
+
+function wireRrhhPlantilla(){
+  const content = document.getElementById('content');
+  document.getElementById('toggleDriverForm').onclick = ()=>{
+    conductorFormOpen = !conductorFormOpen; conductorEditingId = null; renderConductoresScreen();
+  };
+  content.querySelectorAll('[data-rolfiltro]').forEach(el=>{
+    el.onclick = ()=>{ rrhhFiltroRol = el.dataset.rolfiltro; renderConductoresScreen(); };
+  });
   content.querySelectorAll('[data-editdrv]').forEach(btn=>{
+    btn.onclick = ()=>{ conductorEditingId = parseInt(btn.dataset.editdrv); conductorFormOpen = true; renderConductoresScreen(); };
+  });
+  content.querySelectorAll('[data-histdrv]').forEach(btn=>{
     btn.onclick = ()=>{
-      conductorEditingId = parseInt(btn.dataset.editdrv);
-      conductorFormOpen = true;
-      renderScreen();
+      histDriverId = btn.dataset.histdrv;
+      histAmbito='conductor'; histVehicleId='all'; histCentro='all'; histRango='all';
+      screen='historial'; renderScreen();
     };
   });
   content.querySelectorAll('[data-deldrv]').forEach(btn=>{
     btn.onclick = ()=>{
       drivers = drivers.filter(d=>d.id!==parseInt(btn.dataset.deldrv));
-      renderScreen();
+      renderConductoresScreen();
     };
   });
+  if(!conductorFormOpen) return;
+
+  // el coche asignado solo tiene sentido para quien conduce
+  const rolSel = document.getElementById('drvRol');
+  const syncVehicleRow = ()=>{
+    document.getElementById('drvVehicleRow').style.display = rolSel.value==='Conductor' ? '' : 'none';
+  };
+  rolSel.onchange = syncVehicleRow;
+  syncVehicleRow();
+
+  document.getElementById('saveDriverBtn').onclick = ()=>{
+    const nombre = document.getElementById('drvNombre').value.trim();
+    const direccion = document.getElementById('drvDireccion').value.trim();
+    const errorEl = document.getElementById('drvFormError');
+    if(!nombre || !direccion){
+      errorEl.textContent = 'Nombre y dirección son obligatorios.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    const rol = rolSel.value;
+    const datos = {
+      nombre, rol, direccion,
+      telefono: document.getElementById('drvTelefono').value.trim(),
+      email: document.getElementById('drvEmail').value.trim(),
+      altaFecha: document.getElementById('drvAlta').value,
+      estado: document.getElementById('drvEstado').value,
+      turno: document.getElementById('drvTurno').value,
+      horario: document.getElementById('drvHorario').value.trim(),
+      notas: document.getElementById('drvNotas').value.trim(),
+      vehicleId: rol==='Conductor' && document.getElementById('drvVehicle').value
+        ? parseInt(document.getElementById('drvVehicle').value) : null,
+    };
+    if(conductorEditingId){
+      Object.assign(drivers.find(d=>d.id===conductorEditingId), datos);
+      addLog(`Personal actualizado: ${nombre} (${rol})`, 'clear');
+    } else {
+      const nuevo = Object.assign({
+        id: nextDriverId++, diasTrabajados:0, diasBaja:0, diasLibres:0, diasAusencia:0
+      }, datos);
+      drivers.push(nuevo);
+      addHistorial({
+        fecha: datos.altaFecha ? new Date(datos.altaFecha+'T09:00:00') : new Date(),
+        tipo:'Alta de personal', ambito:'conductor', driverId: nuevo.id, vehicleId: nuevo.vehicleId,
+        centro:'', importe:0, descripcion:`Alta en plantilla como ${rol}`, horas:null, notas:''
+      });
+      addLog(`Personal dado de alta: ${nombre} (${rol})`, 'clear');
+    }
+    conductorFormOpen = false; conductorEditingId = null;
+    renderConductoresScreen();
+  };
 }
+
+function wireRrhhCandidatos(){
+  const content = document.getElementById('content');
+  document.getElementById('toggleCandidatoForm').onclick = ()=>{
+    candidatoFormOpen = !candidatoFormOpen; candidatoEditingId = null; renderConductoresScreen();
+  };
+  const buscar = ()=>{ candidatoBusqueda = document.getElementById('cdBuscar').value; renderConductoresScreen(); };
+  document.getElementById('cdBuscarBtn').onclick = buscar;
+  document.getElementById('cdBuscar').onkeydown = e=>{ if(e.key==='Enter') buscar(); };
+
+  content.querySelectorAll('[data-editcd]').forEach(btn=>{
+    btn.onclick = ()=>{ candidatoEditingId = parseInt(btn.dataset.editcd); candidatoFormOpen = true; renderConductoresScreen(); };
+  });
+  content.querySelectorAll('[data-delcd]').forEach(btn=>{
+    btn.onclick = ()=>{ candidatos = candidatos.filter(c=>c.id!==parseInt(btn.dataset.delcd)); renderConductoresScreen(); };
+  });
+  content.querySelectorAll('[data-hirecd]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const c = candidatos.find(x=>x.id===parseInt(btn.dataset.hirecd));
+      if(!c) return;
+      c.estado = 'Contratado';
+      const nuevo = {
+        id: nextDriverId++, nombre:c.nombre, rol: ROLES_PERSONAL.includes(c.puesto)?c.puesto:'Otros',
+        telefono:c.telefono, email:c.email, direccion:'(pendiente de completar)',
+        turno:'Mañana', vehicleId:null, estado:'Activo', horario:'',
+        altaFecha: toDateInputValue(new Date()), notas:`Procedente de candidatura · ${c.notas||''}`.trim(),
+        diasTrabajados:0, diasBaja:0, diasLibres:0, diasAusencia:0
+      };
+      drivers.push(nuevo);
+      addHistorial({
+        tipo:'Alta de personal', ambito:'conductor', driverId:nuevo.id, vehicleId:null,
+        centro:'', importe:0, descripcion:`Contratado como ${nuevo.rol} tras candidatura`, horas:null, notas:''
+      });
+      addLog(`${c.nombre} contratado como ${nuevo.rol}`, 'clear');
+      showToast('Candidato contratado', `${c.nombre} se ha añadido a la plantilla. Completa su dirección en la ficha.`);
+      rrhhTab = 'plantilla';
+      renderConductoresScreen();
+    };
+  });
+
+  if(!candidatoFormOpen) return;
+  document.getElementById('saveCandidatoBtn').onclick = ()=>{
+    const nombre = document.getElementById('cdNombre').value.trim();
+    const errorEl = document.getElementById('cdFormError');
+    if(!nombre){ errorEl.textContent='El nombre es obligatorio.'; errorEl.style.display='block'; return; }
+    const datos = {
+      nombre,
+      puesto: document.getElementById('cdPuesto').value,
+      telefono: document.getElementById('cdTelefono').value.trim(),
+      email: document.getElementById('cdEmail').value.trim(),
+      fechaCV: document.getElementById('cdFecha').value || toDateInputValue(new Date()),
+      fuente: document.getElementById('cdFuente').value.trim(),
+      estado: document.getElementById('cdEstado').value,
+      notas: document.getElementById('cdNotas').value.trim(),
+    };
+    const file = document.getElementById('cdArchivo').files[0];
+    const guardar = (archivo)=>{
+      if(candidatoEditingId){
+        const c = candidatos.find(x=>x.id===candidatoEditingId);
+        Object.assign(c, datos, archivo?{cvArchivo:archivo}:{});
+        addLog(`Candidato actualizado: ${nombre}`, 'clear');
+      } else {
+        const nuevo = Object.assign({id: nextCandidatoId++, cvArchivo: archivo||''}, datos);
+        candidatos.push(nuevo);
+        // el CV queda archivado en el histórico para poder buscarlo después
+        addHistorial({
+          fecha: new Date(datos.fechaCV+'T09:00:00'),
+          tipo:'CV', ambito:'candidato', candidatoId:nuevo.id, driverId:null, vehicleId:null,
+          centro:'', importe:0,
+          descripcion:`CV de ${nombre} para ${datos.puesto}${datos.fuente?' · '+datos.fuente:''}${datos.notas?' · '+datos.notas:''}`,
+          horas:null, notas:datos.estado
+        });
+        addLog(`CV recibido: ${nombre} (${datos.puesto})`, 'info');
+      }
+      candidatoFormOpen = false; candidatoEditingId = null;
+      renderConductoresScreen();
+    };
+    if(file){
+      const reader = new FileReader();
+      reader.onload = ev=>guardar(ev.target.result);
+      reader.readAsDataURL(file);
+    } else guardar(null);
+  };
+}
+
 
 // ============ PANTALLA: INFORMES ============
 function renderInformesScreen(){
@@ -3864,7 +4130,7 @@ function renderInformesScreen(){
   });
 
   // --- Daños por conductor (se imputan al conductor asignado al coche) ---
-  const danosPorConductor = drivers.map(d=>{
+  const danosPorConductor = conductores().map(d=>{
     const veh = vehicles.find(v=>v.id===d.vehicleId);
     return {nombre:d.nombre, plate: veh?veh.plate:'—', danos: veh?veh.damagePoints.length:0};
   }).sort((a,b)=>b.danos-a.danos);
@@ -3952,14 +4218,15 @@ function renderInformesScreen(){
           <span class="inf-row-val">${r.danos}</span>
         </div>`).join('')}
 
-      <div class="section-label" style="margin:20px 0 9px;">Jornadas por conductor</div>
+      <div class="section-label" style="margin:20px 0 9px;">Jornadas por persona</div>
       <div class="inf-table-wrap">
         <table class="inf-table">
-          <thead><tr><th>Conductor</th><th>Estado</th><th>Trabajados</th><th>Baja</th><th>Libres</th><th>Ausencias</th></tr></thead>
+          <thead><tr><th>Persona</th><th>Puesto</th><th>Estado</th><th>Trabajados</th><th>Baja</th><th>Libres</th><th>Ausencias</th></tr></thead>
           <tbody>
             ${drivers.map(d=>`
               <tr>
                 <td style="font-weight:600;">${d.nombre}</td>
+                <td><span class="amos-chip" style="color:${ROL_COLOR[d.rol]||'#6B7280'};background:${(ROL_COLOR[d.rol]||'#6B7280')}18;">${d.rol}</span></td>
                 <td>${d.estado}</td>
                 <td>${d.diasTrabajados||0}</td>
                 <td style="color:${(d.diasBaja||0)>0?'var(--red)':'inherit'};">${d.diasBaja||0}</td>
@@ -4043,11 +4310,22 @@ function renderInformesScreen(){
         ${statCard('Con avería', vehicles.filter(v=>v.dtcs.length>0).length, 'var(--red)')}
       </div>
 
+      <div class="section-label" style="margin:20px 0 9px;">Historial de eventos cerrados</div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:9px;">${historial.length} eventos archivados. Puedes filtrarlos por coche, conductor, taller y rango de fechas en la sección Historial.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+        <button class="toggle-inactive-btn" id="infHistScreenBtn">Abrir historial</button>
+        <button class="toggle-inactive-btn" id="infHistExcelBtn">Historial a Excel</button>
+        <button class="toggle-inactive-btn" id="infHistPdfBtn">Historial a PDF</button>
+      </div>
+
       <button class="add-vehicle-btn" id="exportInformeBtn" style="margin-top:18px;">Exportar informes a Excel</button>
     </div>
   `;
 
   document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  document.getElementById('infHistScreenBtn').onclick = ()=>{ screen='historial'; renderScreen(); };
+  document.getElementById('infHistExcelBtn').onclick = ()=>exportHistorialExcel(filtrarHistorial(buildHistorialItems()));
+  document.getElementById('infHistPdfBtn').onclick = ()=>exportHistorialPdf(filtrarHistorial(buildHistorialItems()));
   document.getElementById('exportInformeBtn').onclick = ()=>{
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(porCoche.map(r=>({
@@ -4060,7 +4338,7 @@ function renderInformesScreen(){
       'Gastos': flotasMap[f].gas, 'Margen': flotasMap[f].ing-flotasMap[f].gas, 'Daños': flotasMap[f].danos
     }))), 'Por flota');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(drivers.map(d=>({
-      'Conductor': d.nombre, 'Estado': d.estado, 'Días trabajados': d.diasTrabajados||0,
+      'Persona': d.nombre, 'Puesto': d.rol, 'Estado': d.estado, 'Días trabajados': d.diasTrabajados||0,
       'Días de baja': d.diasBaja||0, 'Días libres': d.diasLibres||0, 'Ausencias injustificadas': d.diasAusencia||0
     }))), 'Jornadas');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(danosPorConductor.map(r=>({
@@ -4113,7 +4391,7 @@ function responsableDeMulta(vehicleId, fechaStr, horaStr){
   }
 
   // Turno que cubre esa hora ese día
-  for(const d of drivers){
+  for(const d of conductores()){
     const s = shifts[shiftKey(d.id, fechaStr)];
     if(!s || s.vehicleId!==vehicleId) continue;
     if(s.turno==='L' || s.turno==='—') continue;
@@ -4126,7 +4404,7 @@ function responsableDeMulta(vehicleId, fechaStr, horaStr){
     const ayer = new Date(fechaStr+'T12:00:00');
     ayer.setDate(ayer.getDate()-1);
     const ayerStr = toDateInputValue(ayer);
-    for(const d of drivers){
+    for(const d of conductores()){
       const s = shifts[shiftKey(d.id, ayerStr)];
       if(!s || s.vehicleId!==vehicleId) continue;
       if(s.turno==='T' || s.turno==='N'){
@@ -4135,7 +4413,7 @@ function responsableDeMulta(vehicleId, fechaStr, horaStr){
     }
   }
   // Sin cuadrante para ese día: se cae al conductor asignado al coche
-  const asignado = drivers.find(d=>d.vehicleId===vehicleId);
+  const asignado = conductores().find(d=>d.vehicleId===vehicleId);
   if(asignado){
     return {tipo:'conductor', nombre:asignado.nombre, driverId:asignado.id, detalle:'Sin turno registrado ese día; conductor asignado al coche'};
   }
@@ -4145,6 +4423,597 @@ function responsableDeMulta(vehicleId, fechaStr, horaStr){
 let nextFineId = 1;
 let fines = [];
 let multasForm = {vehicleId:'', fecha:'', hora:'', importe:'', concepto:'', lugar:'', puntos:''};
+
+// ============ HISTORIAL ============
+// Registro de todo lo ya cerrado: eventos realizados, altas y bajas de conductores, etc.
+let nextHistId = 1;
+let historial = [];
+function addHistorial(entry){
+  historial.push(Object.assign({id: nextHistId++, fecha: new Date()}, entry));
+}
+
+// Historial pasado simulado, para que la consola tenga contenido desde el principio
+(function seedHistorial(){
+  const atras = dias => { const d = new Date(); d.setDate(d.getDate()-dias); return d; };
+  vehicles.forEach((v,i)=>{
+    const cond = conductores().find(d=>d.vehicleId===v.id);
+    [[380,'ITV caducidad','ITV San Blas',55],[745,'ITV caducidad','ITV San Blas',52]].forEach(([d,tipo,centro,imp])=>{
+      historial.push({id:nextHistId++, fecha:atras(d+i*7), tipo, ambito:'vehiculo', vehicleId:v.id,
+        centro, importe:imp, descripcion:`${tipo} superada en ${centro}`, horas:2, notas:'',
+        driverId: cond?cond.id:null});
+    });
+    [120,260,410].forEach((d,k)=>{
+      const centro = pick(centrosList);
+      historial.push({id:nextHistId++, fecha:atras(d+i*5), tipo:'Revisión', ambito:'vehiculo', vehicleId:v.id,
+        centro, importe: Math.round(randRange(140,420)),
+        descripcion:`Revisión ${k%2===0?'2 filtros':'4 filtros'} en ${centro}`,
+        horas: Math.round(randRange(2,6)), notas:'', driverId: cond?cond.id:null});
+    });
+    historial.push({id:nextHistId++, fecha:atras(200+i*9), tipo:'Seguro caducidad', ambito:'vehiculo', vehicleId:v.id,
+      centro:'', importe: Math.round(randRange(480,900)), descripcion:'Póliza renovada', horas:0, notas:'',
+      driverId: cond?cond.id:null});
+    if(i%2===0){
+      historial.push({id:nextHistId++, fecha:atras(90+i*11), tipo:'Avería', ambito:'vehiculo', vehicleId:v.id,
+        centro: pick(centrosList), importe: Math.round(randRange(80,600)),
+        descripcion:'Avería reparada tras aviso OBD', horas: Math.round(randRange(3,28)), notas:'',
+        driverId: cond?cond.id:null});
+    }
+  });
+  candidatos.forEach(c=>{
+    historial.push({id:nextHistId++, fecha:new Date(c.fechaCV+'T09:00:00'), tipo:'CV', ambito:'candidato',
+      candidatoId:c.id, driverId:null, vehicleId:null, centro:'', importe:0,
+      descripcion:`CV de ${c.nombre} para ${c.puesto}${c.fuente?' · '+c.fuente:''}${c.notas?' · '+c.notas:''}`,
+      horas:null, notas:c.estado});
+  });
+  drivers.forEach((d,i)=>{
+    const veh = vehicles.find(v=>v.id===d.vehicleId);
+    historial.push({id:nextHistId++, fecha:atras(600+i*40), tipo:'Alta de personal', ambito:'conductor',
+      driverId:d.id, vehicleId:d.vehicleId, centro:'', importe:0,
+      descripcion:`Alta en plantilla como ${d.rol}${d.rol==='Conductor'&&veh?' · '+veh.plate:''}`, horas:null, notas:''});
+    if(d.diasBaja>0){
+      historial.push({id:nextHistId++, fecha:atras(150+i*30), tipo:'Baja laboral', ambito:'conductor',
+        driverId:d.id, vehicleId:d.vehicleId, centro:'', importe:0,
+        descripcion:`Baja laboral de ${d.diasBaja} días`, horas:null, notas:''});
+    }
+    for(let k=0;k<(d.diasAusencia||0);k++){
+      historial.push({id:nextHistId++, fecha:atras(40+i*17+k*23), tipo:'Ausencia injustificada', ambito:'conductor',
+        driverId:d.id, vehicleId:d.vehicleId, centro:'', importe:0,
+        descripcion:'Ausencia injustificada', horas:null, notas:''});
+    }
+    historial.push({id:nextHistId++, fecha:atras(70+i*25), tipo:'Vacaciones', ambito:'conductor',
+      driverId:d.id, vehicleId:d.vehicleId, centro:'', importe:0,
+      descripcion:'Periodo de vacaciones', horas:null, notas:''});
+  });
+})();
+
+// ---- Consola de historial ----
+let histAmbito = 'todos';     // 'todos' | 'vehiculo' | 'conductor'
+let histVehicleId = 'all';
+let histDriverId = 'all';
+let histCentro = 'all';
+let histDesde = '';
+let histHasta = '';
+let histTipos = new Set();    // tipos EXCLUIDOS
+let histSearch = '';
+let histRango = 'all';   // atajo de rango: '7' | '15' | '30' | '90' | '365' | 'all'
+const HIST_RANGOS = [
+  {val:'7', label:'−7D'},
+  {val:'15', label:'−15D'},
+  {val:'30', label:'−30D'},
+  {val:'90', label:'−90D'},
+  {val:'365', label:'−1 AÑO'},
+  {val:'all', label:'COMPLETO'},
+];
+let histColsPanelOpen = false;
+let histOpenColFilter = null;
+let histColFilterSearch = '';
+const HIST_COLS = [
+  {key:'tipo',     label:'Tipo',          fixed:true},
+  {key:'fecha',    label:'Fecha report',  fixed:true},
+  {key:'evento',   label:'Evento',        filtrable:true},
+  {key:'plate',    label:'Matrícula',     filtrable:true},
+  {key:'flota',    label:'Flota',         filtrable:true},
+  {key:'conductor',label:'Persona',       filtrable:true},
+  {key:'centro',   label:'Taller/centro', filtrable:true},
+  {key:'importe',  label:'Importe'},
+  {key:'horas',    label:'Horas'},
+  {key:'detalle',  label:'Detalle'},
+  {key:'notas',    label:'Notas',         filtrable:true},
+];
+let histColOrder = HIST_COLS.map(c=>c.key);
+let histColVisible = {};
+HIST_COLS.forEach(c=>{ histColVisible[c.key] = true; });
+let histColFilters = {evento:new Set(), plate:new Set(), flota:new Set(), conductor:new Set(), centro:new Set(), notas:new Set()};
+function histVisibleCols(){
+  return histColOrder.map(k=>HIST_COLS.find(c=>c.key===k)).filter(c=>c && histColVisible[c.key]);
+}
+function histColValue(it, key){
+  const v = vehicles.find(x=>x.id===it.vehicleId);
+  const d = drivers.find(x=>x.id===it.driverId);
+  switch(key){
+    case 'evento': return it.tipo;
+    case 'plate': return v?v.plate:'—';
+    case 'flota': return v?(v.flota||'—'):'—';
+    case 'conductor': {
+      if(it.candidatoId){
+        const c = candidatos.find(x=>x.id===it.candidatoId);
+        return c ? c.nombre : '—';
+      }
+      return d?d.nombre:'—';
+    }
+    case 'centro': return it.centro||'—';
+    case 'notas': return it.notas||'—';
+    default: return '';
+  }
+}
+function histColFilterIcon(key){
+  const activo = histColFilters[key] && histColFilters[key].size>0;
+  return `<span class="colfilter-icon ${activo?'active':''}" data-histfiltercol="${key}">▾</span>`;
+}
+function histSaveColConfig(){
+  try{
+    localStorage.setItem('flotia.histcols.' + (currentUser&&currentUser.username?currentUser.username:'anon'),
+      JSON.stringify({order:histColOrder, visible:histColVisible}));
+  }catch(e){}
+}
+function histLoadColConfig(){
+  histColOrder = HIST_COLS.map(c=>c.key);
+  histColVisible = {};
+  HIST_COLS.forEach(c=>{ histColVisible[c.key] = true; });
+  try{
+    const raw = localStorage.getItem('flotia.histcols.' + (currentUser&&currentUser.username?currentUser.username:'anon'));
+    if(!raw) return;
+    const cfg = JSON.parse(raw);
+    if(Array.isArray(cfg.order)){
+      const valid = cfg.order.filter(k=>HIST_COLS.some(c=>c.key===k));
+      HIST_COLS.forEach(c=>{ if(!valid.includes(c.key)) valid.push(c.key); });
+      histColOrder = valid;
+    }
+    if(cfg.visible) HIST_COLS.forEach(c=>{
+      if(c.fixed) return;
+      if(typeof cfg.visible[c.key]==='boolean') histColVisible[c.key]=cfg.visible[c.key];
+    });
+  }catch(e){}
+}
+
+// Une el historial propio con las multas registradas, para verlo todo en una sola consola
+function buildHistorialItems(){
+  const items = historial.map(h=>({
+    fecha: h.fecha, tipo: h.tipo, ambito: h.ambito, vehicleId: h.vehicleId,
+    driverId: h.driverId, centro: h.centro||'', importe: h.importe||0,
+    descripcion: h.descripcion||'', horas: h.horas, notas: h.notas||'',
+    // un evento de coche NO es un evento del conductor y viceversa
+    candidatoId: h.candidatoId || null,
+    scopes: h.ambito==='candidato' ? ['candidato'] : (h.ambito==='conductor' ? ['conductor'] : ['vehiculo'])
+  }));
+  fines.forEach(m=>{
+    items.push({
+      fecha: new Date(m.fecha+'T'+(m.hora||'00:00')),
+      tipo: 'Multa',
+      ambito: m.responsableTipo==='taller' ? 'vehiculo' : 'conductor',
+      vehicleId: m.vehicleId,
+      driverId: m.driverId || null,
+      centro: m.responsableTipo==='taller' ? m.responsableNombre : '',
+      importe: m.importe||0,
+      descripcion: `${m.concepto||'Multa'}${m.lugar?' · '+m.lugar:''} · responsable: ${m.responsableNombre}${m.puntos?` · −${m.puntos} pts`:''}`,
+      horas: null, notas: m.pagada?'Pagada':'Pendiente',
+      // una multa aparece tanto en la ficha del coche como en la del conductor
+      scopes: m.driverId ? ['vehiculo','conductor'] : ['vehiculo']
+    });
+  });
+  return items.filter(it=>it.fecha <= new Date());
+}
+
+function histTiposDisponibles(items){
+  return [...new Set(items.map(i=>i.tipo))].sort();
+}
+
+function filtrarHistorial(items){
+  let out = items.slice();
+  if(histAmbito!=='todos') out = out.filter(i=>(i.scopes||[]).includes(histAmbito));
+  // al filtrar por coche solo salen eventos del coche; al filtrar por conductor, solo los suyos
+  if(histVehicleId!=='all'){
+    out = out.filter(i=>(i.scopes||[]).includes('vehiculo') && String(i.vehicleId)===String(histVehicleId));
+  }
+  if(histDriverId!=='all'){
+    out = out.filter(i=>(i.scopes||[]).includes('conductor') && String(i.driverId)===String(histDriverId));
+  }
+  if(histCentro!=='all') out = out.filter(i=>(i.centro||'—')===histCentro);
+  if(histRango!=='all'){
+    const desdeRango = new Date();
+    desdeRango.setDate(desdeRango.getDate() - parseInt(histRango));
+    out = out.filter(i=>i.fecha >= desdeRango);
+  }
+  if(histDesde) out = out.filter(i=>i.fecha >= new Date(histDesde+'T00:00:00'));
+  if(histHasta) out = out.filter(i=>i.fecha <= new Date(histHasta+'T23:59:59'));
+  out = out.filter(i=>!histTipos.has(i.tipo));
+  if(histSearch.trim()){
+    const q = histSearch.toLowerCase();
+    out = out.filter(i=>{
+      const v = vehicles.find(x=>x.id===i.vehicleId);
+      const d = drivers.find(x=>x.id===i.driverId);
+      return (i.tipo+' '+i.descripcion+' '+(i.centro||'')+' '+(v?v.plate:'')+' '+(d?d.nombre:'')).toLowerCase().includes(q);
+    });
+  }
+  return out.sort((a,b)=>b.fecha-a.fecha);
+}
+
+function renderHistorialScreen(){
+  const content = document.getElementById('content');
+  content.classList.add('no-pad');
+  const todos = buildHistorialItems();
+  const items = filtrarHistorial(todos);
+  const tipos = histTiposDisponibles(todos);
+  const centros = [...new Set(todos.map(i=>i.centro).filter(Boolean))].sort();
+  const totalImporte = items.reduce((s,i)=>s+(i.importe||0),0);
+
+  const chipTipo = (t,i)=>{
+    const off = histTipos.has(t);
+    const chip = TAREA_CHIPS.find(c=>c.val===t);
+    const color = chip ? chip.color : (t==='Multa' ? '#92400E' : paletteFor(i));
+    const icon = chip ? chip.icon : '';
+    const svg = icon ? `<svg class="filter-chip-icon" viewBox="0 0 16 16">${icon}</svg>` : '';
+    return `<span class="filter-chip ${off?'off':''}" data-histtipo="${t}" style="--chip-color:${color};">${svg}${shortLabel(t,13)}</span>`;
+  };
+
+  // filtros tipo Excel por columna
+  const distinctHist = {};
+  Object.keys(histColFilters).forEach(k=>{
+    distinctHist[k] = [...new Set(todos.map(i=>histColValue(i,k)))].sort();
+  });
+  const itemsF = items.filter(it => Object.keys(histColFilters).every(k => !histColFilters[k].has(histColValue(it,k))));
+
+  const HCOLS = histVisibleCols();
+  const histCellFor = (it, key)=>{
+    const v = vehicles.find(x=>x.id===it.vehicleId);
+    const d = drivers.find(x=>x.id===it.driverId);
+    const chip = TAREA_CHIPS.find(c=>c.val===it.tipo);
+    const color = chip ? chip.color : (it.tipo==='Multa' ? '#92400E' : '#6B7280');
+    switch(key){
+      case 'tipo': return `<td class="td-tipo"><span class="tipo-badge" style="background:${color};" title="${it.tipo}">${chip ? `<svg viewBox="0 0 16 16">${chip.icon}</svg>` : `<span style="font-size:8px;font-weight:700;">${it.tipo.slice(0,1)}</span>`}</span></td>`;
+      case 'fecha': return `<td>${formatDate(it.fecha)}</td>`;
+      case 'evento': return `<td>${it.tipo}</td>`;
+      case 'plate': return `<td><span class="plain-plate-text">${v?v.plate:'—'}</span></td>`;
+      case 'flota': return `<td>${v?(v.flota||'—'):'—'}</td>`;
+      case 'conductor': {
+        if(it.candidatoId){
+          const c = candidatos.find(x=>x.id===it.candidatoId);
+          return `<td>${c?c.nombre:'—'}</td>`;
+        }
+        return `<td>${d?d.nombre:'—'}</td>`;
+      }
+      case 'centro': return `<td>${it.centro||'—'}</td>`;
+      case 'importe': return `<td>${it.importe? Math.round(it.importe).toLocaleString('es-ES')+' €':'—'}</td>`;
+      case 'horas': return `<td>${it.horas!=null?it.horas+' h':'—'}</td>`;
+      case 'detalle': return `<td style="white-space:normal;min-width:190px;">${it.descripcion}</td>`;
+      case 'notas': return `<td>${it.notas||'—'}</td>`;
+      default: return '<td>—</td>';
+    }
+  };
+  const histThFor = (c)=>{
+    if(c.key==='tipo') return '<th class="th-tipo" draggable="true" data-histdragcol="tipo">Tipo</th>';
+    const filtro = c.filtrable ? histColFilterIcon(c.key) : '';
+    return `<th draggable="true" data-histdragcol="${c.key}"><div class="col-head-row"><span>${c.label}</span>${filtro}</div></th>`;
+  };
+  const theadHist = `<tr>${HCOLS.map(histThFor).join('')}</tr>`;
+  const filas = itemsF.map(it=>`<tr>${HCOLS.map(c=>histCellFor(it,c.key)).join('')}</tr>`).join('');
+  const totalImporteF = itemsF.reduce((s,i)=>s+(i.importe||0),0);
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Menú</button>
+      <div class="sub-title">Historial</div>
+    </div>
+    <div class="amos-window">
+      <div class="amos-titlebar">HISTORIAL — EVENTOS CERRADOS</div>
+      <div class="filter-titlebar">FILTROS DE HISTORIAL</div>
+      <div class="filter-bar">
+        <div class="filter-group">
+          <div class="filter-group-label">Ámbito</div>
+          <div class="filter-chip-row">
+            ${[['todos','TODO'],['vehiculo','COCHE'],['conductor','PERSONAL'],['candidato','CV']].map(([v,l])=>
+              `<span class="filter-chip ${histAmbito===v?'':'off'}" data-histambito="${v}" style="--chip-color:#41547a;">${l}</span>`).join('')}
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Tipo de evento</div>
+          <div class="filter-group-or">OR</div>
+          <div class="filter-chip-row">${tipos.map((t,i)=>chipTipo(t,i)).join('')}</div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Coche</div>
+          <select class="hist-select" id="histVehSel">
+            <option value="all">Todos</option>
+            ${vehicles.map(v=>`<option value="${v.id}" ${String(histVehicleId)===String(v.id)?'selected':''}>${v.plate}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Conductor</div>
+          <select class="hist-select" id="histDrvSel">
+            <option value="all">Todos</option>
+            ${drivers.map(d=>`<option value="${d.id}" ${String(histDriverId)===String(d.id)?'selected':''}>${d.nombre}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Taller / centro</div>
+          <select class="hist-select" id="histCentroSel">
+            <option value="all">Todos</option>
+            ${centros.map(c=>`<option value="${c}" ${histCentro===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Retroceder</div>
+          <div class="filter-chip-row">
+            ${HIST_RANGOS.map(r=>`<span class="filter-chip ${histRango===r.val?'':'off'}" data-histrango="${r.val}" style="--chip-color:${r.val==='all'?'#41547a':'#1E3A5F'};">${r.label}</span>`).join('')}
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Rango de fechas</div>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <input type="date" class="hist-select" id="histDesde" value="${histDesde}">
+            <input type="date" class="hist-select" id="histHasta" value="${histHasta}">
+          </div>
+        </div>
+        <div class="filter-group" style="border-right:none;flex:1;min-width:150px;">
+          <div class="filter-group-label">Buscar</div>
+          <input type="text" id="histSearchInput" class="filter-search-input" placeholder="Matrícula, taller, concepto..." value="${histSearch}">
+        </div>
+        <div class="filter-group" style="border-right:none;">
+          <div class="filter-group-label">&nbsp;</div>
+          <span class="filter-chip off" id="histClearBtn" style="--chip-color:#B00020;">LIMPIAR</span>
+        </div>
+      </div>
+      ${histOpenColFilter ? `
+        <div class="colfilter-panel">
+          <div class="colfilter-head">Filtro — ${(HIST_COLS.find(c=>c.key===histOpenColFilter)||{}).label}<span class="colfilter-close" id="histColFilterClose">✕ Cerrar</span></div>
+          <input type="text" id="histColFilterSearch" class="colfilter-search" placeholder="Buscar valor..." value="${histColFilterSearch}">
+          <div class="colfilter-quickrow">
+            <span class="colfilter-quickbtn" id="histColAllBtn">Seleccionar todo</span>
+            <span class="colfilter-quickbtn" id="histColNoneBtn">Ninguno</span>
+          </div>
+          <div class="colfilter-list">
+            ${distinctHist[histOpenColFilter].filter(val=>String(val).toLowerCase().includes(histColFilterSearch.toLowerCase())).map(val=>`
+              <div class="colfilter-item">
+                <label><input type="checkbox" data-histcolval="${val}" ${histColFilters[histOpenColFilter].has(val)?'':'checked'}> ${val}</label>
+                <span class="colfilter-only" data-histonlyval="${val}">Solo esto</span>
+              </div>
+            `).join('') || `<div style="font-size:11px;color:#8a97ad;padding:6px 0;">Sin coincidencias.</div>`}
+          </div>
+        </div>
+      ` : ''}
+      <div class="amos-table-wrap">
+        <table class="amos-table">
+          <thead>${theadHist}</thead>
+          <tbody>${filas || `<tr><td colspan="${HCOLS.length}" style="padding:16px;text-align:center;color:var(--muted);">Sin eventos para estos filtros.</td></tr>`}</tbody>
+        </table>
+      </div>
+      <div class="amos-footer">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="gear-btn" id="histSettingsBtn" title="Configurar columnas">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 6.6a3.4 3.4 0 100 6.8 3.4 3.4 0 000-6.8zm0 1.5a1.9 1.9 0 110 3.8 1.9 1.9 0 010-3.8z" fill="currentColor"/>
+              <path d="M8.8 1.6h2.4l.35 2.05c.42.14.82.31 1.19.53l1.73-1.18 1.7 1.7-1.18 1.73c.22.37.39.77.53 1.19l2.05.35v2.4l-2.05.35c-.14.42-.31.82-.53 1.19l1.18 1.73-1.7 1.7-1.73-1.18c-.37.22-.77.39-1.19.53L11.2 18.4H8.8l-.35-2.05c-.42-.14-.82-.31-1.19-.53l-1.73 1.18-1.7-1.7 1.18-1.73a5.9 5.9 0 01-.53-1.19L1.6 11.2V8.8l2.05-.35c.14-.42.31-.82.53-1.19L3 5.53l1.7-1.7 1.73 1.18c.37-.22.77-.39 1.19-.53L8.8 1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="amos-count">${itemsF.length} evento${itemsF.length===1?'':'s'} · ${Math.round(totalImporteF).toLocaleString('es-ES')} € en total</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="amos-export-btn" id="histExcelBtn">Exportar a Excel</button>
+          <button class="amos-export-btn" id="histPdfBtn" style="background:#1e4fa8;">Exportar a PDF</button>
+        </div>
+      </div>
+    </div>
+    ${histColsPanelOpen ? `
+      <div class="settings-overlay" id="histSettingsOverlay">
+        <div class="settings-modal">
+          <div class="settings-head">
+            <span>Configuración de columnas</span>
+            <span class="settings-close" id="histSettingsClose">✕</span>
+          </div>
+          <div class="settings-sub">Marca las columnas que quieres ver. También puedes arrastrar el título de una columna en la tabla para moverla de sitio.</div>
+          <div class="settings-list">
+            ${histColOrder.map(k=>{
+              const c = HIST_COLS.find(x=>x.key===k);
+              if(!c) return '';
+              return `<label class="settings-item ${c.fixed?'fixed':''}">
+                <input type="checkbox" data-histcolvis="${c.key}" ${histColVisible[c.key]?'checked':''} ${c.fixed?'disabled':''}>
+                <span>${c.label}</span>
+                ${c.fixed?'<span class="cols-fixed-tag">fija</span>':''}
+              </label>`;
+            }).join('')}
+          </div>
+          <div class="settings-actions">
+            <button class="toggle-inactive-btn" id="histColsAllBtn">Mostrar todas</button>
+            <button class="toggle-inactive-btn" id="histColsResetBtn">Restablecer orden</button>
+            <button class="save-btn" id="histSettingsSave" style="width:auto;padding:8px 18px;">Guardar</button>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+    <div id="printArea" style="display:none;"></div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  content.querySelectorAll('[data-histambito]').forEach(el=>{
+    el.onclick = ()=>{ histAmbito = el.dataset.histambito; renderHistorialScreen(); };
+  });
+  content.querySelectorAll('[data-histrango]').forEach(el=>{
+    el.onclick = ()=>{
+      histRango = el.dataset.histrango;
+      // el atajo manda sobre las fechas sueltas
+      histDesde=''; histHasta='';
+      renderHistorialScreen();
+    };
+  });
+  content.querySelectorAll('[data-histtipo]').forEach(el=>{
+    el.onclick = ()=>{
+      const t = el.dataset.histtipo;
+      if(histTipos.has(t)) histTipos.delete(t); else histTipos.add(t);
+      renderHistorialScreen();
+    };
+  });
+  document.getElementById('histVehSel').onchange = e=>{ histVehicleId = e.target.value; renderHistorialScreen(); };
+  document.getElementById('histDrvSel').onchange = e=>{ histDriverId = e.target.value; renderHistorialScreen(); };
+  document.getElementById('histCentroSel').onchange = e=>{ histCentro = e.target.value; renderHistorialScreen(); };
+  document.getElementById('histDesde').onchange = e=>{ histDesde = e.target.value; histRango='all'; renderHistorialScreen(); };
+  document.getElementById('histHasta').onchange = e=>{ histHasta = e.target.value; histRango='all'; renderHistorialScreen(); };
+  const si = document.getElementById('histSearchInput');
+  si.oninput = e=>{ histSearch = e.target.value; };
+  si.onkeydown = e=>{ if(e.key==='Enter') renderHistorialScreen(); };
+  si.onblur = ()=>renderHistorialScreen();
+  document.getElementById('histClearBtn').onclick = ()=>{
+    histAmbito='todos'; histVehicleId='all'; histDriverId='all'; histCentro='all';
+    histDesde=''; histHasta=''; histTipos.clear(); histSearch=''; histRango='all';
+    Object.keys(histColFilters).forEach(k=>histColFilters[k].clear());
+    histOpenColFilter = null;
+    renderHistorialScreen();
+  };
+  document.getElementById('histExcelBtn').onclick = ()=>exportHistorialExcel(itemsF);
+  document.getElementById('histPdfBtn').onclick = ()=>exportHistorialPdf(itemsF);
+
+  // filtros por columna
+  content.querySelectorAll('[data-histfiltercol]').forEach(el=>{
+    el.onclick = (e)=>{
+      e.stopPropagation();
+      const k = el.dataset.histfiltercol;
+      histOpenColFilter = (histOpenColFilter===k) ? null : k;
+      histColFilterSearch = '';
+      renderHistorialScreen();
+    };
+  });
+  if(histOpenColFilter){
+    document.getElementById('histColFilterClose').onclick = ()=>{ histOpenColFilter=null; renderHistorialScreen(); };
+    const cs = document.getElementById('histColFilterSearch');
+    cs.oninput = e=>{ histColFilterSearch = e.target.value; };
+    cs.onkeydown = e=>{ if(e.key==='Enter') renderHistorialScreen(); };
+    cs.onblur = ()=>renderHistorialScreen();
+    document.getElementById('histColAllBtn').onclick = ()=>{ histColFilters[histOpenColFilter].clear(); renderHistorialScreen(); };
+    document.getElementById('histColNoneBtn').onclick = ()=>{
+      distinctHist[histOpenColFilter].forEach(v=>histColFilters[histOpenColFilter].add(v));
+      renderHistorialScreen();
+    };
+    content.querySelectorAll('[data-histcolval]').forEach(cb=>{
+      cb.onchange = ()=>{
+        const val = cb.dataset.histcolval;
+        if(cb.checked) histColFilters[histOpenColFilter].delete(val);
+        else histColFilters[histOpenColFilter].add(val);
+        renderHistorialScreen();
+      };
+    });
+    content.querySelectorAll('[data-histonlyval]').forEach(el=>{
+      el.onclick = ()=>{
+        const val = el.dataset.histonlyval;
+        histColFilters[histOpenColFilter] = new Set(distinctHist[histOpenColFilter].filter(v=>v!==val));
+        renderHistorialScreen();
+      };
+    });
+  }
+
+  // panel de columnas
+  document.getElementById('histSettingsBtn').onclick = ()=>{ histColsPanelOpen = true; renderHistorialScreen(); };
+  if(histColsPanelOpen){
+    const cerrar = ()=>{ histColsPanelOpen=false; histSaveColConfig(); renderHistorialScreen(); };
+    document.getElementById('histSettingsClose').onclick = cerrar;
+    document.getElementById('histSettingsSave').onclick = cerrar;
+    document.getElementById('histSettingsOverlay').onclick = e=>{ if(e.target.id==='histSettingsOverlay') cerrar(); };
+    document.getElementById('histColsAllBtn').onclick = ()=>{ HIST_COLS.forEach(c=>histColVisible[c.key]=true); histSaveColConfig(); renderHistorialScreen(); };
+    document.getElementById('histColsResetBtn').onclick = ()=>{
+      histColOrder = HIST_COLS.map(c=>c.key);
+      HIST_COLS.forEach(c=>histColVisible[c.key]=true);
+      histSaveColConfig(); renderHistorialScreen();
+    };
+    content.querySelectorAll('[data-histcolvis]').forEach(cb=>{
+      cb.onchange = ()=>{ histColVisible[cb.dataset.histcolvis] = cb.checked; histSaveColConfig(); renderHistorialScreen(); };
+    });
+  }
+
+  // reordenar arrastrando el título de la columna
+  let histDragKey = null;
+  content.querySelectorAll('[data-histdragcol]').forEach(th=>{
+    th.ondragstart = e=>{
+      histDragKey = th.dataset.histdragcol;
+      th.classList.add('th-dragging');
+      e.dataTransfer.effectAllowed='move';
+      try{ e.dataTransfer.setData('text/plain', histDragKey); }catch(err){}
+    };
+    th.ondragend = ()=>{
+      th.classList.remove('th-dragging');
+      content.querySelectorAll('[data-histdragcol]').forEach(x=>x.classList.remove('th-drop-left','th-drop-right'));
+    };
+    th.ondragover = e=>{
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      if(!histDragKey || histDragKey===th.dataset.histdragcol) return;
+      const from = histColOrder.indexOf(histDragKey);
+      const to = histColOrder.indexOf(th.dataset.histdragcol);
+      th.classList.remove('th-drop-left','th-drop-right');
+      th.classList.add(to<from ? 'th-drop-left' : 'th-drop-right');
+    };
+    th.ondragleave = ()=>{ th.classList.remove('th-drop-left','th-drop-right'); };
+    th.ondrop = e=>{
+      e.preventDefault();
+      th.classList.remove('th-drop-left','th-drop-right');
+      const target = th.dataset.histdragcol;
+      const src = histDragKey || (e.dataTransfer? e.dataTransfer.getData('text/plain') : null);
+      if(!src || src===target) return;
+      const from = histColOrder.indexOf(src), to = histColOrder.indexOf(target);
+      if(from<0||to<0) return;
+      histColOrder.splice(from,1);
+      histColOrder.splice(to,0,src);
+      histDragKey=null; histSaveColConfig(); renderHistorialScreen();
+    };
+  });
+}
+
+function historialToRows(items){
+  return items.map(it=>{
+    const v = vehicles.find(x=>x.id===it.vehicleId);
+    const d = drivers.find(x=>x.id===it.driverId);
+    return {
+      'Fecha': formatDate(it.fecha),
+      'Evento': it.tipo,
+      'Matrícula': v?v.plate:'',
+      'Flota': v?(v.flota||''):'',
+      'Conductor': d?d.nombre:'',
+      'Taller/centro': it.centro||'',
+      'Importe (€)': it.importe||0,
+      'Horas parado': it.horas!=null?it.horas:'',
+      'Detalle': it.descripcion||'',
+      'Notas': it.notas||''
+    };
+  });
+}
+function exportHistorialExcel(items){
+  const ws = XLSX.utils.json_to_sheet(historialToRows(items));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Historial');
+  XLSX.writeFile(wb, `historial_flotia_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+function exportHistorialPdf(items){
+  const rows = historialToRows(items);
+  const cols = rows.length ? Object.keys(rows[0]) : [];
+  let titulo = 'Historial de eventos';
+  if(histVehicleId!=='all'){
+    const v = vehicles.find(x=>String(x.id)===String(histVehicleId));
+    if(v) titulo += ` · ${v.plate}`;
+  }
+  if(histDriverId!=='all'){
+    const d = drivers.find(x=>String(x.id)===String(histDriverId));
+    if(d) titulo += ` · ${d.nombre}`;
+  }
+  if(histDesde || histHasta) titulo += ` · ${histDesde||'inicio'} a ${histHasta||'hoy'}`;
+  document.getElementById('printArea').innerHTML = `
+    <h2 style="font-family:Arial;font-size:15px;margin:0 0 4px;">${titulo}</h2>
+    <div style="font-family:Arial;font-size:10px;color:#555;margin-bottom:10px;">
+      ${rows.length} evento(s) · generado el ${new Date().toLocaleDateString('es-ES')}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-family:Arial;font-size:9px;">
+      <thead><tr>${cols.map(c=>`<th style="border:1px solid #999;background:#e8edf5;padding:3px;text-align:left;">${c}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td style="border:1px solid #ccc;padding:3px;">${r[c]}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>
+  `;
+  window.print();
+}
+
 // Un par de multas de ejemplo, con el responsable resuelto por el cuadrante
 (function seedFines(){
   const hoy = new Date();
@@ -4312,6 +5181,165 @@ function renderMultasScreen(){
   });
 }
 
+// ============ PANTALLA: CENTROS (talleres, ITV y otros proveedores) ============
+const TIPOS_CENTRO = ['Taller', 'Estación ITV', 'Neumáticos', 'Chapa y pintura', 'Lavado', 'Grúa', 'Aseguradora', 'Otros'];
+let nextCentroId = 1;
+let centros = [
+  {id:nextCentroId++, nombre:'Taller Central', tipo:'Taller', direccion:'C/ Embajadores 120, Madrid', telefono:'914 000 111', contacto:'Luis M.', propio:true, notas:'Taller propio'},
+  {id:nextCentroId++, nombre:'ITV San Blas', tipo:'Estación ITV', direccion:'Av. Arcentales 28, Madrid', telefono:'913 222 333', contacto:'', propio:false, notas:'Cita previa obligatoria'},
+  {id:nextCentroId++, nombre:'AutoRápido Norte', tipo:'Taller', direccion:'C/ Bravo Murillo 240, Madrid', telefono:'915 444 555', contacto:'Ana P.', propio:false, notas:''},
+  {id:nextCentroId++, nombre:'Mecánica Sur', tipo:'Taller', direccion:'Av. Córdoba 15, Madrid', telefono:'914 666 777', contacto:'', propio:false, notas:''},
+];
+let centroFormOpen = false;
+let centroEditingId = null;
+let centrosFiltroTipo = 'all';
+
+// La lista de centros de los eventos se alimenta de esta pantalla
+function sincronizarCentrosList(){
+  centrosList = centros.map(c=>c.nombre);
+}
+
+function renderCentrosScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+  const lista = centros.filter(c=> centrosFiltroTipo==='all' || c.tipo===centrosFiltroTipo);
+  const editing = centroEditingId ? centros.find(c=>c.id===centroEditingId) : null;
+
+  // cuántos eventos y qué gasto acumula cada centro
+  const usoDe = (nombre)=>{
+    const eventos = vehicles.reduce((n,v)=>n + (v.tasks||[]).filter(t=>t.centro===nombre).length, 0);
+    const hist = historial.filter(h=>h.centro===nombre);
+    const gasto = hist.reduce((s,h)=>s+(h.importe||0),0);
+    return {eventos, cerrados:hist.length, gasto};
+  };
+
+  const formHTML = !centroFormOpen ? '' : `
+    <div class="reg-form">
+      <div class="multas-grid">
+        <div class="form-row"><label>Nombre</label><input type="text" id="ctNombre" value="${editing?editing.nombre:''}" placeholder="Ej: Taller Central"></div>
+        <div class="form-row"><label>Tipo</label>
+          <select id="ctTipo">${TIPOS_CENTRO.map(t=>`<option ${editing&&editing.tipo===t?'selected':''}>${t}</option>`).join('')}</select>
+        </div>
+        <div class="form-row"><label>Teléfono</label><input type="tel" id="ctTelefono" value="${editing?editing.telefono:''}" placeholder="900 000 000"></div>
+        <div class="form-row"><label>Persona de contacto</label><input type="text" id="ctContacto" value="${editing?editing.contacto:''}" placeholder="Nombre"></div>
+        <div class="form-row" style="grid-column:1/-1;"><label>Dirección</label><input type="text" id="ctDireccion" value="${editing?editing.direccion:''}" placeholder="Calle, número, ciudad"></div>
+        <div class="form-row" style="grid-column:1/-1;"><label>Notas</label><input type="text" id="ctNotas" value="${editing?editing.notas:''}" placeholder="Horario, condiciones, tarifas..."></div>
+        <div class="form-row"><label>¿Es centro propio?</label>
+          <select id="ctPropio">
+            <option value="no" ${editing&&!editing.propio?'selected':''}>No</option>
+            <option value="si" ${editing&&editing.propio?'selected':''}>Sí</option>
+          </select>
+        </div>
+      </div>
+      <div id="ctError" style="color:var(--red);font-size:11.5px;display:none;margin-bottom:8px;"></div>
+      <button class="save-btn" id="ctSaveBtn">${editing?'Guardar cambios':'Dar de alta'}</button>
+    </div>
+  `;
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Menú</button>
+      <div class="sub-title">Centros</div>
+    </div>
+    <div style="padding:14px 16px;">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Talleres, estaciones de ITV y cualquier otro proveedor al que lleves los coches. Los que des de alta aquí aparecen como opción de "Centro" al planificar eventos.</div>
+      <button class="add-vehicle-btn" id="ctToggleForm">${centroFormOpen?'✕ Cancelar':'+ Dar de alta centro'}</button>
+      ${formHTML}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 10px;">
+        <span class="filter-chip ${centrosFiltroTipo==='all'?'':'off'}" data-ctfiltro="all" style="--chip-color:#41547a;">TODOS (${centros.length})</span>
+        ${TIPOS_CENTRO.filter(t=>centros.some(c=>c.tipo===t)).map((t,i)=>
+          `<span class="filter-chip ${centrosFiltroTipo===t?'':'off'}" data-ctfiltro="${t}" style="--chip-color:${paletteFor(i)};">${t.toUpperCase()} (${centros.filter(c=>c.tipo===t).length})</span>`).join('')}
+      </div>
+      ${lista.length===0 ? '<div style="color:var(--muted);font-size:12.5px;">Sin centros de este tipo.</div>' : lista.map(c=>{
+        const uso = usoDe(c.nombre);
+        return `
+        <div class="task-row">
+          <div class="task-row-top">
+            <span class="task-tipo">${c.nombre}${c.propio?' <span class="amos-chip" style="color:var(--green);background:#0B7A5522;">PROPIO</span>':''}</span>
+            <span class="amos-chip" style="color:var(--muted);background:var(--panel-alt);border:1px solid var(--border);">${c.tipo}</span>
+          </div>
+          <div class="task-meta">
+            ${c.direccion || 'Sin dirección'}${c.telefono?' · '+c.telefono:''}${c.contacto?' · '+c.contacto:''}
+            ${c.notas?`<br><span style="color:var(--muted);">${c.notas}</span>`:''}
+            <br><span style="color:var(--muted);">${uso.eventos} evento(s) planificados · ${uso.cerrados} cerrados · ${Math.round(uso.gasto).toLocaleString('es-ES')} € facturados</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="toggle-inactive-btn" data-ctedit="${c.id}">Editar</button>
+            <button class="toggle-inactive-btn" data-cthist="${c.nombre}">Ver historial</button>
+            <button class="task-del" data-ctdel="${c.id}">✕</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  document.getElementById('ctToggleForm').onclick = ()=>{
+    centroFormOpen = !centroFormOpen; centroEditingId = null; renderCentrosScreen();
+  };
+  content.querySelectorAll('[data-ctfiltro]').forEach(el=>{
+    el.onclick = ()=>{ centrosFiltroTipo = el.dataset.ctfiltro; renderCentrosScreen(); };
+  });
+  content.querySelectorAll('[data-ctedit]').forEach(el=>{
+    el.onclick = ()=>{ centroEditingId = parseInt(el.dataset.ctedit); centroFormOpen = true; renderCentrosScreen(); };
+  });
+  content.querySelectorAll('[data-cthist]').forEach(el=>{
+    el.onclick = ()=>{
+      histCentro = el.dataset.cthist;
+      histAmbito='todos'; histVehicleId='all'; histDriverId='all';
+      screen='historial'; renderScreen();
+    };
+  });
+  content.querySelectorAll('[data-ctdel]').forEach(el=>{
+    el.onclick = ()=>{
+      const c = centros.find(x=>x.id===parseInt(el.dataset.ctdel));
+      const enUso = c && vehicles.some(v=>(v.tasks||[]).some(t=>t.centro===c.nombre));
+      if(enUso){
+        showToast('Centro en uso', `${c.nombre} tiene eventos asignados. Cámbialos de centro antes de borrarlo.`);
+        return;
+      }
+      centros = centros.filter(x=>x.id!==parseInt(el.dataset.ctdel));
+      sincronizarCentrosList();
+      renderCentrosScreen();
+    };
+  });
+  if(centroFormOpen){
+    document.getElementById('ctSaveBtn').onclick = ()=>{
+      const nombre = document.getElementById('ctNombre').value.trim();
+      const err = document.getElementById('ctError');
+      if(!nombre){ err.textContent = 'El nombre es obligatorio.'; err.style.display='block'; return; }
+      const dup = centros.find(c=>c.nombre.toLowerCase()===nombre.toLowerCase() && c.id!==centroEditingId);
+      if(dup){ err.textContent = 'Ya existe un centro con ese nombre.'; err.style.display='block'; return; }
+      const datos = {
+        nombre,
+        tipo: document.getElementById('ctTipo').value,
+        telefono: document.getElementById('ctTelefono').value.trim(),
+        contacto: document.getElementById('ctContacto').value.trim(),
+        direccion: document.getElementById('ctDireccion').value.trim(),
+        notas: document.getElementById('ctNotas').value.trim(),
+        propio: document.getElementById('ctPropio').value==='si',
+      };
+      if(centroEditingId){
+        const c = centros.find(x=>x.id===centroEditingId);
+        const anterior = c.nombre;
+        Object.assign(c, datos);
+        // si cambia el nombre, se actualiza en los eventos que ya lo usaban
+        if(anterior!==datos.nombre){
+          vehicles.forEach(v=>(v.tasks||[]).forEach(t=>{ if(t.centro===anterior) t.centro = datos.nombre; }));
+          historial.forEach(h=>{ if(h.centro===anterior) h.centro = datos.nombre; });
+        }
+        addLog(`Centro actualizado: ${datos.nombre}`, 'clear');
+      } else {
+        centros.push(Object.assign({id: nextCentroId++}, datos));
+        addLog(`Centro dado de alta: ${datos.nombre}`, 'clear');
+      }
+      sincronizarCentrosList();
+      centroFormOpen = false; centroEditingId = null;
+      renderCentrosScreen();
+    };
+  }
+}
+
 let eventosLiveFilter = 'all'; // 'all' | 'fault' | 'clear' | 'share' | 'info'
 function renderEventosLiveScreen(){
   const content = document.getElementById('content');
@@ -4386,7 +5414,7 @@ function renderTurnosScreen(){
   }).length;
 
   // filas de conductores; si el filtro de notas está activo, solo los que tengan alguna
-  const filas = drivers.filter(d=>{
+  const filas = conductores().filter(d=>{
     const info = turnosDatosDe(d);
     if(turnosFilters.conductor.has(d.nombre)) return false;
     if(turnosFilters.matricula.has(info.matricula)) return false;
@@ -4466,21 +5494,21 @@ function renderTurnosScreen(){
           <div class="filter-group-label">Conductor</div>
           <div class="filter-group-or">OR</div>
           <div class="filter-chip-row">
-            ${drivers.map((d,i)=>turnoChip('conductor', d.nombre, shortLabel(d.nombre,9), paletteFor(i+2), ICON_CONDUCTOR)).join('')}
+            ${conductores().map((d,i)=>turnoChip('conductor', d.nombre, shortLabel(d.nombre,9), paletteFor(i+2), ICON_CONDUCTOR)).join('')}
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-group-label">Coche</div>
           <div class="filter-group-or">OR</div>
           <div class="filter-chip-row">
-            ${[...new Set(drivers.map(d=>turnosDatosDe(d).matricula))].sort().map((mat,i)=>turnoChip('matricula', mat, mat, paletteFor(i), ICON_COCHE)).join('')}
+            ${[...new Set(conductores().map(d=>turnosDatosDe(d).matricula))].sort().map((mat,i)=>turnoChip('matricula', mat, mat, paletteFor(i), ICON_COCHE)).join('')}
           </div>
         </div>
         <div class="filter-group" style="border-right:none;">
           <div class="filter-group-label">Flota</div>
           <div class="filter-group-or">OR</div>
           <div class="filter-chip-row">
-            ${[...new Set(drivers.map(d=>turnosDatosDe(d).flota))].sort().map((f,i)=>turnoChip('flota', f, shortLabel(f,10), paletteFor(i+4), ICON_FLOTA)).join('')}
+            ${[...new Set(conductores().map(d=>turnosDatosDe(d).flota))].sort().map((f,i)=>turnoChip('flota', f, shortLabel(f,10), paletteFor(i+4), ICON_FLOTA)).join('')}
           </div>
         </div>
         <div class="filter-group" style="border-right:none;">
@@ -4502,13 +5530,13 @@ function renderTurnosScreen(){
             <div class="form-row"><label>Conductor 1</label>
               <select id="genD1">
                 <option value="">— elegir —</option>
-                ${drivers.map(d=>`<option value="${d.id}" ${String(turnosGen.d1)===String(d.id)?'selected':''}>${d.nombre}</option>`).join('')}
+                ${conductores().map(d=>`<option value="${d.id}" ${String(turnosGen.d1)===String(d.id)?'selected':''}>${d.nombre}</option>`).join('')}
               </select>
             </div>
             <div class="form-row"><label>Conductor 2</label>
               <select id="genD2">
                 <option value="">— ninguno —</option>
-                ${drivers.map(d=>`<option value="${d.id}" ${String(turnosGen.d2)===String(d.id)?'selected':''}>${d.nombre}</option>`).join('')}
+                ${conductores().map(d=>`<option value="${d.id}" ${String(turnosGen.d2)===String(d.id)?'selected':''}>${d.nombre}</option>`).join('')}
               </select>
             </div>
             <div class="form-row"><label>Empieza conductor 1 en</label>
@@ -4642,7 +5670,7 @@ function renderTurnosScreen(){
   }
 
   document.getElementById('tnExportBtn').onclick = ()=>{
-    const data = drivers.map(d=>{
+    const data = conductores().map(d=>{
       const info = turnosDatosDe(d);
       const row = {Conductor:d.nombre, Coche:info.matricula, Flota:info.flota};
       dias.forEach(day=>{
@@ -4775,6 +5803,8 @@ function renderScreen(){
   else if(screen==='turnos') renderTurnosScreen();
   else if(screen==='eventoslive') renderEventosLiveScreen();
   else if(screen==='multas') renderMultasScreen();
+  else if(screen==='historial') renderHistorialScreen();
+  else if(screen==='centros') renderCentrosScreen();
   refreshAlertPill();
 }
 
@@ -4865,6 +5895,8 @@ document.getElementById('logToggle').onclick = ()=>{
   renderLog();
 };
 loadColConfig();
+histLoadColConfig();
+sincronizarCentrosList();
 setInterval(tick, 2200);
 </script>
 </body>

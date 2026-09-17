@@ -680,6 +680,43 @@
   .tn-sticky-3{border-right:2px solid var(--border-strong) !important;}
   .hist-select{font-family:var(--font-display);font-size:10px;border:1px solid #c3cedd;border-radius:5px;padding:3px 5px;background:#fff;color:#1a2b45;max-width:132px;}
   .hist-select:focus{outline:none;border-color:var(--orange);}
+  .roles-screen{padding:26px 20px;max-width:720px;margin:0 auto;}
+  .roles-head{text-align:center;margin-bottom:24px;}
+  .roles-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:30px;font-weight:600;letter-spacing:7px;color:var(--text);}
+  .roles-sub{font-size:12.5px;color:var(--muted);margin-top:6px;}
+  .roles-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;}
+  .rol-card{border:1px solid var(--border);border-left:4px solid var(--rol-color);border-radius:12px;background:var(--panel);
+    padding:15px 15px 13px;cursor:pointer;box-shadow:var(--shadow-sm);transition:box-shadow .16s, transform .12s;}
+  .rol-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+  .rol-card.on{box-shadow:0 0 0 2px var(--rol-color), var(--shadow-md);}
+  .rol-card.small{padding:12px 13px;}
+  .rol-name{font-size:14.5px;font-weight:700;letter-spacing:-0.015em;color:var(--text);}
+  .rol-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;}
+  .rol-extra{margin-top:20px;}
+  .hero-rol-btn{position:absolute;top:18px;right:18px;font-size:10.5px;color:rgba(255,255,255,0.8);
+    border:1px solid rgba(255,255,255,0.28);border-radius:99px;padding:4px 11px;cursor:pointer;z-index:2;}
+  .hero-rol-btn:hover{background:rgba(255,255,255,0.12);color:#fff;}
+  .portal-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:15px 16px;margin-bottom:11px;box-shadow:var(--shadow-sm);}
+  .portal-card-head{font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+  .portal-badge{background:var(--red);color:#fff;border-radius:99px;padding:1px 7px;font-size:9.5px;letter-spacing:0;}
+  .portal-plate{font-family:var(--font-mono);font-size:22px;font-weight:700;letter-spacing:1px;color:var(--text);}
+  .portal-meta{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .portal-dtc{margin-top:11px;}
+  .portal-dtc-row{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border);}
+  .portal-dtc-row:last-child{border-bottom:none;}
+  .portal-dtc-code{font-family:var(--font-mono);font-weight:700;color:var(--red);font-size:12.5px;}
+  .portal-dtc-desc{font-size:11.5px;color:var(--text);}
+  .portal-ok{font-size:12px;color:var(--green);}
+  .portal-note{font-size:10.5px;color:var(--muted);margin-top:9px;line-height:1.45;}
+  .portal-aviso{font-size:11.5px;padding:9px 11px;border-radius:8px;margin-bottom:6px;line-height:1.4;}
+  .portal-aviso.info{background:var(--panel-alt);color:var(--text);}
+  .portal-aviso.ok{background:#ECFDF3;color:#05603A;border:1px solid #ABEFC6;}
+  .portal-aviso.aviso{background:#FFFAEB;color:#93370D;border:1px solid #FEDF89;}
+  .portal-aviso.urgente{background:#FEF3F2;color:#912018;border:1px solid #FDA29B;font-weight:600;}
+  .portal-sol{padding:10px 0;border-bottom:1px solid var(--border);}
+  .portal-sol:last-child{border-bottom:none;}
+  .portal-sol-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;color:var(--text);}
+  .portal-sol-meta{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45;}
   .docs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:12px;}
   .doc-slot{border:1px solid var(--border);border-radius:9px;padding:9px;background:var(--panel-alt);text-align:center;}
   .doc-slot-label{font-size:9.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600;margin-bottom:6px;}
@@ -1093,7 +1130,44 @@ let logEntries = [];
 let regFormOpen = false;
 let regExpandedId = null;
 const SKIP_LOGIN_FOR_TESTING = true; // ← poner a false para volver a exigir login
-let screen = SKIP_LOGIN_FOR_TESTING ? 'home' : 'login';       // 'login' | 'home' | 'map' | 'mantenimiento' | 'forecast' | 'vehiculos' | 'damage' | 'materiales'
+
+// ---- Roles de acceso ----
+const ROLES_APP = [
+  {id:'admin',       nombre:'Administrador',  desc:'Acceso total a todas las flotas y ajustes',       color:'#1F2937'},
+  {id:'gestor',      nombre:'Gestor de flota', desc:'Todo, pero limitado a la flota que gestiona',    color:'#1B4DE4'},
+  {id:'conductor',   nombre:'Conductor',      desc:'Su coche, avisos y solicitudes',                  color:'#0B7A55'},
+  {id:'propietario', nombre:'Propietario',    desc:'Datos y costes de los coches de su propiedad',    color:'#92400E'},
+  {id:'cliente',     nombre:'Cliente taller', desc:'Solo el estado de su coche o coches',             color:'#6D4AC4'},
+];
+let currentRole = 'admin';
+let rolConductorId = null;   // qué conductor es, cuando se entra con rol conductor
+let rolPropietario = null;   // nombre del dueño, cuando se entra como propietario o cliente
+
+// Qué módulos ve cada rol
+const MODULOS_POR_ROL = {
+  admin: null, // null = todos
+  gestor: ['goForecastBtn','goTurnosBtn','goHistorialBtn','goMantBtn','goDamageBtn','goEventosBtn','goVehBtn','goConductoresBtn','goCentrosBtn','goLiveBtn','goMapBtn','goMultasBtn','goInformesBtn','goSolicitudesBtn'],
+  propietario: ['goForecastBtn','goHistorialBtn','goVehBtn','goMapBtn','goMultasBtn','goInformesBtn'],
+  cliente: ['goForecastBtn','goHistorialBtn','goVehBtn'],
+  conductor: [],
+};
+function puedeVer(modId){
+  const permitidos = MODULOS_POR_ROL[currentRole];
+  return permitidos === null ? true : permitidos.includes(modId);
+}
+// Coches que el rol actual tiene derecho a ver
+function vehiculosVisibles(){
+  if(currentRole==='conductor'){
+    const d = drivers.find(x=>x.id===rolConductorId);
+    return d ? vehicles.filter(v=>v.id===d.vehicleId) : [];
+  }
+  if(currentRole==='propietario' || currentRole==='cliente'){
+    return vehicles.filter(v=>v.dueno===rolPropietario);
+  }
+  return vehicles;
+}
+
+let screen = SKIP_LOGIN_FOR_TESTING ? 'roles' : 'login';       // 'login' | 'home' | 'map' | 'mantenimiento' | 'forecast' | 'vehiculos' | 'damage' | 'materiales'
 let homeDropdownOpen = false;
 let scannerMenu = 'root'; // 'root' | 'read' | 'live' | 'help'
 let leafletMapObj = null;
@@ -1395,7 +1469,7 @@ function renderHome(){
   if(HOME_STYLE==='editorial'){ renderHomeEditorial(activeAlerts, dueCount, driversActive, damagePointsTotal); return; }
   if(HOME_STYLE==='command'){ renderHomeCommand(activeAlerts, dueCount, driversActive, damagePointsTotal); return; }
 
-  const bentoCard = (id, size, color, title, sub, stat)=>`
+  const bentoCard = (id, size, color, title, sub, stat)=>!puedeVer(id) ? '' : `
     <div class="bento-card ${size}" id="${id}" style="--card-accent:${color};">
       <div class="bento-title">${title}</div>
       <div class="bento-sub">${sub}</div>
@@ -1406,8 +1480,9 @@ function renderHome(){
   content.innerHTML = `
     <div class="home-screen">
       <div class="home-hero">
-        <div class="home-hero-title">Hola${currentUser?', '+currentUser.profile:''}</div>
-        <div class="home-hero-sub">${vehicles.length} vehículos en flota · ${activeAlerts} con avería activa</div>
+        <div class="home-hero-title">${(ROLES_APP.find(r=>r.id===currentRole)||{}).nombre || 'FLOTIA'}</div>
+        <div class="home-hero-sub">${vehiculosVisibles().length} vehículo(s) · ${activeAlerts} con avería activa${rolPropietario?' · '+rolPropietario:''}</div>
+        <span class="hero-rol-btn" id="cambiarRolBtn">Cambiar rol</span>
       </div>
       <div class="bento-grid">
         ${bentoCard('goForecastBtn', 'big', '#1B4DE4', 'Previsión de flota', 'ITV, seguros, revisiones y vencimientos', dueCount)}
@@ -1421,6 +1496,7 @@ function renderHome(){
         ${bentoCard('goCentrosBtn', 'small', '#7C3AED', 'Centros', 'Talleres, ITV y proveedores', centros.length)}
         ${bentoCard('goLiveBtn', 'small', '#B00020', 'Datos en vivo', 'Actividad de la flota', logEntries.length)}
         ${bentoCard('goMapBtn', 'small', '#0E7490', 'Mapa', 'Posición en tiempo real', null)}
+        ${bentoCard('goSolicitudesBtn', 'small', '#C8841C', 'Solicitudes', 'Taller y días libres', solicitudes.filter(x=>x.estado==='Pendiente').length||null)}
         ${bentoCard('goMultasBtn', 'small', '#92400E', 'Multas', 'Registrar y atribuir', fines.length||null)}
         ${bentoCard('goInformesBtn', 'big', '#1F2937', 'Informes', 'Resumen de flota, costes y jornadas', null)}
       </div>
@@ -1531,6 +1607,7 @@ const HOME_MODULES = [
   {id:'goCentrosBtn',   name:'Centros',            desc:'Talleres, ITV y otros proveedores',      keys:'centros talleres itv proveedores garaje'},
   {id:'goLiveBtn',      name:'Datos en vivo',      desc:'Consola de actividad de la flota',       keys:'datos vivo live consola registro log actividad'},
   {id:'goMapBtn',       name:'Mapa',               desc:'Posición de los coches en tiempo real',  keys:'mapa gps posicion ubicacion'},
+  {id:'goSolicitudesBtn',name:'Solicitudes',       desc:'Peticiones de taller y días libres',     keys:'solicitudes peticiones taller libranza dias libres autorizar'},
   {id:'goMultasBtn',    name:'Multas',             desc:'Registrar multas y buscar responsable',  keys:'multas sanciones trafico dgt puntos responsable'},
   {id:'goInformesBtn',  name:'Informes',           desc:'Resumen de flota y mantenimiento',       keys:'informes estadisticas resumen excel'},
 ];
@@ -1635,7 +1712,7 @@ function renderHomeEditorial(activeAlerts, dueCount, driversActive, damagePoints
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const fecha = `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]}`;
 
-  const row = (id, num, title, meta, flag)=>`
+  const row = (id, num, title, meta, flag)=>!puedeVer(id) ? '' : `
     <div class="ed-row" id="${id}">
       <span class="ed-num">${num}</span>
       <span class="ed-title">${title}</span>
@@ -1679,7 +1756,7 @@ function renderHomeEditorial(activeAlerts, dueCount, driversActive, damagePoints
 
 function renderHomeDashboard(activeAlerts, dueCount, driversActive, damagePointsTotal){
   const content = document.getElementById('content');
-  const dashTile = (id, size, ledColor, title, sub)=>`
+  const dashTile = (id, size, ledColor, title, sub)=>!puedeVer(id) ? '' : `
     <div class="dash-tile ${size}" id="${id}" style="--led-color:${ledColor};">
       <span class="dash-tile-led"></span>
       <div class="dash-tile-title">${title}</div>
@@ -1729,20 +1806,26 @@ function renderHomeDashboard(activeAlerts, dueCount, driversActive, damagePoints
 }
 
 function wireHomeButtons(){
-  document.getElementById('goVehBtn').onclick = ()=>{ screen='vehiculos'; vehiculosMode='lookup'; vehiculosPlateInput=''; renderScreen(); };
-  document.getElementById('goEventosBtn').onclick = ()=>{ screen='eventos'; eventosPlateInput=''; renderScreen(); };
-  document.getElementById('goConductoresBtn').onclick = ()=>{ screen='conductores'; conductorFormOpen=false; renderScreen(); };
-  const tb=document.getElementById('goTurnosBtn'); if(tb) tb.onclick = ()=>{ screen='turnos'; renderScreen(); };
-  const lb=document.getElementById('goLiveBtn'); if(lb) lb.onclick = ()=>{ screen='eventoslive'; renderScreen(); };
-  const mb=document.getElementById('goMultasBtn'); if(mb) mb.onclick = ()=>{ screen='multas'; renderScreen(); };
-  const hb=document.getElementById('goHistorialBtn'); if(hb) hb.onclick = ()=>{ screen='historial'; renderScreen(); };
-  const cb=document.getElementById('goCentrosBtn'); if(cb) cb.onclick = ()=>{ screen='centros'; centroFormOpen=false; renderScreen(); };
-  document.getElementById('goInformesBtn').onclick = ()=>{ screen='informes'; renderScreen(); };
-  document.getElementById('goMapBtn').onclick = ()=>{ screen='map'; renderScreen(); };
-  document.getElementById('goMantBtn').onclick = ()=>{ screen='mantenimiento'; selectedId=null; pickerOpen.mant=true; scannerMenu='root'; showAssistant=false; renderScreen(); };
-  document.getElementById('goForecastBtn').onclick = ()=>{ screen='forecast'; renderScreen(); };
-  document.getElementById('goDamageBtn').onclick = ()=>{ screen='damage'; selectedId=null; pickerOpen.damage=true; renderScreen(); };
+  const crb = document.getElementById('cambiarRolBtn');
+  if(crb) crb.onclick = ()=>{ screen='roles'; renderScreen(); };
+  // los botones que el rol no puede ver no existen en el DOM, por eso se comprueba cada uno
+  const on = (id, fn)=>{ const el = document.getElementById(id); if(el) el.onclick = fn; };
+  on('goVehBtn', ()=>{ screen='vehiculos'; vehiculosMode='lookup'; vehiculosPlateInput=''; renderScreen(); });
+  on('goEventosBtn', ()=>{ screen='eventos'; eventosPlateInput=''; renderScreen(); });
+  on('goConductoresBtn', ()=>{ screen='conductores'; conductorFormOpen=false; renderScreen(); });
+  on('goTurnosBtn', ()=>{ screen='turnos'; renderScreen(); });
+  on('goLiveBtn', ()=>{ screen='eventoslive'; renderScreen(); });
+  on('goMultasBtn', ()=>{ screen='multas'; renderScreen(); });
+  on('goHistorialBtn', ()=>{ screen='historial'; renderScreen(); });
+  on('goCentrosBtn', ()=>{ screen='centros'; centroFormOpen=false; renderScreen(); });
+  on('goSolicitudesBtn', ()=>{ screen='solicitudes'; solAsignando=null; renderScreen(); });
+  on('goInformesBtn', ()=>{ screen='informes'; renderScreen(); });
+  on('goMapBtn', ()=>{ screen='map'; renderScreen(); });
+  on('goMantBtn', ()=>{ screen='mantenimiento'; selectedId=null; pickerOpen.mant=true; scannerMenu='root'; showAssistant=false; renderScreen(); });
+  on('goForecastBtn', ()=>{ screen='forecast'; renderScreen(); });
+  on('goDamageBtn', ()=>{ screen='damage'; selectedId=null; pickerOpen.damage=true; renderScreen(); });
 }
+
 
 // ============ PANTALLA: MAPA ============
 function makeDivIcon(v){
@@ -2278,7 +2361,7 @@ function remanenteTask(v,t){
 }
 function buildForecastItems(){
   let items = [];
-  vehicles.forEach(v=>{
+  vehiculosVisibles().forEach(v=>{
     v.tasks.forEach(t=>{
       items.push({v, t, tarea:t.tipo, remanente:remanenteTask(v,t), preaviso:preavisoSortValue(v,t)});
     });
@@ -2324,6 +2407,35 @@ function revisarAlertasParado(){
     if(!enTurno) return;
     alertasAvisadas[v.id] = true;
     addLog(`${v.plate} → ALERTA: ${Math.floor(horas)} h sin moverse con ${enTurno.driver.nombre} en turno`, 'fault');
+  });
+}
+
+// Avisos que se lanzan al arrancar el turno del conductor
+let avisosTurnoEnviados = {};
+function revisarAvisosTurno(){
+  const ahora = new Date();
+  const hoyStr = toDateInputValue(ahora);
+  conductores().forEach(d=>{
+    const s = shifts[shiftKey(d.id, hoyStr)];
+    if(!s || s.turno==='L' || s.turno==='—') return;
+    if(!turnoCubreHora(s.turno, ahora.getHours())) return;
+    const clave = `${d.id}-${hoyStr}`;
+    if(avisosTurnoEnviados[clave]) return;
+    avisosTurnoEnviados[clave] = true;
+    // citas propias pendientes
+    solicitudes.filter(x=>x.driverId===d.id && x.cita).forEach(x=>{
+      notificacionesDeCita(x).forEach(a=>addNotificacion(d.id, a.texto, a.tipo));
+    });
+    // ITV o taller del coche que lleva hoy
+    const v = vehicles.find(x=>x.id===s.vehicleId);
+    if(v){
+      (v.tasks||[]).forEach(t=>{
+        if(!t.planificado) return;
+        const dias = Math.round((new Date(t.planificado) - ahora)/86400000);
+        if(dias===0) addNotificacion(d.id, `HOY: ${t.tipo}${t.centro?' en '+t.centro:''}`, 'urgente');
+        else if(dias===1) addNotificacion(d.id, `Mañana: ${t.tipo}${t.centro?' en '+t.centro:''}`, 'aviso');
+      });
+    }
   });
 }
 
@@ -5619,6 +5731,356 @@ function renderCentrosScreen(){
   }
 }
 
+// ============ SOLICITUDES DEL CONDUCTOR ============
+const MOTIVOS_TALLER = [
+  'Ruedas gastadas', 'Pinchazo', 'Avería', 'Consumo de agua',
+  'Aviso de presión de aceite', 'Consumo de aceite', 'Otras'
+];
+let nextSolicitudId = 1;
+let solicitudes = [
+  {id:nextSolicitudId++, tipo:'taller', driverId:1, vehicleId:0, motivo:'Ruedas gastadas',
+   detalle:'Las delanteras patinan con lluvia', creada:new Date(Date.now()-2*86400000),
+   estado:'Pendiente', cita:null, respuesta:''},
+  {id:nextSolicitudId++, tipo:'libranza', driverId:2, vehicleId:1, motivo:'Días libres',
+   detalle:'Boda familiar', desde:toDateInputValue(new Date(Date.now()+12*86400000)),
+   hasta:toDateInputValue(new Date(Date.now()+14*86400000)),
+   creada:new Date(Date.now()-86400000), estado:'Pendiente', cita:null, respuesta:''},
+];
+let nextNotifId = 1;
+let notificaciones = [];   // {id, driverId, texto, fecha, tipo, leida}
+function addNotificacion(driverId, texto, tipo){
+  notificaciones.push({id:nextNotifId++, driverId, texto, tipo:tipo||'info', fecha:new Date(), leida:false});
+}
+// Avisos de cita: al generarla, 24 h antes y el mismo día
+function notificacionesDeCita(sol){
+  if(!sol.cita) return [];
+  const out = [];
+  const cita = new Date(sol.cita.fecha + 'T' + (sol.cita.hora||'09:00'));
+  const ahora = new Date();
+  const horasFaltan = (cita - ahora)/3600000;
+  const txt = `Cita en ${sol.cita.centro} el ${sol.cita.fecha.split('-').reverse().join('/')} a las ${sol.cita.hora}`;
+  if(horasFaltan <= 24 && horasFaltan > 0) out.push({texto:`Recordatorio (mañana): ${txt}`, tipo:'aviso'});
+  if(toDateInputValue(cita) === toDateInputValue(ahora)) out.push({texto:`HOY: ${txt}`, tipo:'urgente'});
+  return out;
+}
+
+
+// ============ PANTALLA: SELECCIÓN DE ROL ============
+function renderRolesScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+  const duenos = [...new Set(vehicles.map(v=>v.dueno).filter(Boolean))];
+  content.innerHTML = `
+    <div class="roles-screen">
+      <div class="roles-head">
+        <div class="roles-title">FLOTIA</div>
+        <div class="roles-sub">Elige con qué rol quieres entrar</div>
+      </div>
+      <div class="roles-grid">
+        ${ROLES_APP.map(r=>`
+          <div class="rol-card" data-rol="${r.id}" style="--rol-color:${r.color};">
+            <div class="rol-name">${r.nombre}</div>
+            <div class="rol-desc">${r.desc}</div>
+          </div>`).join('')}
+      </div>
+      <div class="rol-extra" id="rolExtra"></div>
+    </div>
+  `;
+  content.querySelectorAll('[data-rol]').forEach(el=>{
+    el.onclick = ()=>{
+      const rol = el.dataset.rol;
+      const extra = document.getElementById('rolExtra');
+      content.querySelectorAll('.rol-card').forEach(c=>c.classList.remove('on'));
+      el.classList.add('on');
+      if(rol==='conductor'){
+        extra.innerHTML = `
+          <div class="section-label" style="margin-bottom:8px;">¿Qué conductor eres?</div>
+          <div class="roles-grid">
+            ${conductores().map(d=>{
+              const v = vehicles.find(x=>x.id===d.vehicleId);
+              return `<div class="rol-card small" data-drv="${d.id}" style="--rol-color:#0B7A55;">
+                <div class="rol-name">${d.nombre}</div>
+                <div class="rol-desc">${v?v.plate:'sin coche'} · turno de ${d.turno}</div>
+              </div>`;
+            }).join('')}
+          </div>`;
+        extra.querySelectorAll('[data-drv]').forEach(b=>{
+          b.onclick = ()=>{
+            currentRole='conductor'; rolConductorId=parseInt(b.dataset.drv);
+            screen='portal'; renderScreen();
+          };
+        });
+      } else if(rol==='propietario' || rol==='cliente'){
+        extra.innerHTML = `
+          <div class="section-label" style="margin-bottom:8px;">¿De qué titular?</div>
+          <div class="roles-grid">
+            ${duenos.map(dn=>`<div class="rol-card small" data-dueno="${dn}" style="--rol-color:#92400E;">
+              <div class="rol-name">${dn}</div>
+              <div class="rol-desc">${vehicles.filter(v=>v.dueno===dn).length} coche(s)</div>
+            </div>`).join('')}
+          </div>`;
+        extra.querySelectorAll('[data-dueno]').forEach(b=>{
+          b.onclick = ()=>{
+            currentRole=rol; rolPropietario=b.dataset.dueno;
+            screen='home'; renderScreen();
+          };
+        });
+      } else {
+        currentRole = rol; rolConductorId=null; rolPropietario=null;
+        screen='home'; renderScreen();
+      }
+    };
+  });
+}
+
+// ============ PANTALLA: PORTAL DEL CONDUCTOR ============
+let portalTab = 'inicio';   // 'inicio' | 'taller' | 'libranza'
+let portalTallerForm = {motivo:MOTIVOS_TALLER[0], detalle:''};
+let portalLibranzaForm = {desde:'', hasta:'', detalle:''};
+
+function renderPortalScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+  const d = drivers.find(x=>x.id===rolConductorId);
+  if(!d){ screen='roles'; renderScreen(); return; }
+  const v = vehicles.find(x=>x.id===d.vehicleId);
+  const mis = solicitudes.filter(s=>s.driverId===d.id).sort((a,b)=>b.creada-a.creada);
+
+  // avisos: los guardados más los recordatorios de cita que tocan hoy
+  const avisos = notificaciones.filter(n=>n.driverId===d.id).slice().reverse().map(n=>({texto:n.texto, tipo:n.tipo}));
+  mis.filter(s=>s.cita).forEach(s=>{ notificacionesDeCita(s).forEach(a=>avisos.unshift(a)); });
+
+  const estadoColor = {'Pendiente':'#C8841C','Autorizado':'#0B7A55','Rechazado':'#C0223B','Cita asignada':'#1B4DE4'};
+
+  const tabInicio = `
+    <div class="portal-card">
+      <div class="portal-card-head">Mi coche</div>
+      ${v ? `
+        <div class="portal-plate">${v.plate}</div>
+        <div class="portal-meta">${v.marca||''} ${v.modelo||''} · ${v.type}${v.flota?' · '+v.flota:''}</div>
+        <div class="portal-dtc">
+          ${v.dtcs.length ? v.dtcs.map(c=>`
+            <div class="portal-dtc-row">
+              <span class="portal-dtc-code">${c.code}</span>
+              <span class="portal-dtc-desc">${c.desc}</span>
+            </div>`).join('') : '<div class="portal-ok">Sin códigos de avería activos</div>'}
+        </div>
+        ${v.dtcs.length ? '<div class="portal-note">Solo lectura: el borrado de códigos lo hace el taller o el gestor de flota.</div>' : ''}
+      ` : '<div class="portal-ok">No tienes coche asignado ahora mismo.</div>'}
+    </div>
+
+    <div class="portal-card">
+      <div class="portal-card-head">Avisos ${avisos.length?`<span class="portal-badge">${avisos.length}</span>`:''}</div>
+      ${avisos.length ? avisos.map(a=>`<div class="portal-aviso ${a.tipo}">${a.texto}</div>`).join('')
+        : '<div class="portal-ok">No tienes avisos pendientes.</div>'}
+    </div>
+
+    <div class="portal-card">
+      <div class="portal-card-head">Mis solicitudes</div>
+      ${mis.length ? mis.map(s=>{
+        const est = s.cita ? 'Cita asignada' : s.estado;
+        return `
+        <div class="portal-sol">
+          <div class="portal-sol-top">
+            <span>${s.tipo==='taller' ? 'Taller · '+s.motivo : 'Días libres'}</span>
+            <span class="amos-chip" style="color:${estadoColor[est]};background:${estadoColor[est]}22;">${est.toUpperCase()}</span>
+          </div>
+          <div class="portal-sol-meta">
+            ${s.tipo==='libranza' ? `Del ${(s.desde||'').split('-').reverse().join('/')} al ${(s.hasta||'').split('-').reverse().join('/')}` : (s.detalle||'')}
+            ${s.cita ? `<br><strong>Cita:</strong> ${s.cita.fecha.split('-').reverse().join('/')} a las ${s.cita.hora} en ${s.cita.centro}` : ''}
+            ${s.respuesta ? `<br><span style="color:var(--muted);">${s.respuesta}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('') : '<div class="portal-ok">No has enviado ninguna solicitud.</div>'}
+    </div>`;
+
+  const tabTaller = `
+    <div class="portal-card">
+      <div class="portal-card-head">Pedir cita en el taller</div>
+      <div class="form-row"><label>Motivo</label>
+        <select id="ptMotivo">${MOTIVOS_TALLER.map(m=>`<option ${portalTallerForm.motivo===m?'selected':''}>${m}</option>`).join('')}</select>
+      </div>
+      <div class="form-row"><label>Descripción</label><input type="text" id="ptDetalle" value="${portalTallerForm.detalle}" placeholder="Cuenta brevemente qué pasa"></div>
+      <button class="save-btn" id="ptEnviar">Enviar solicitud</button>
+      <div class="portal-note">La solicitud queda en espera hasta que el gestor la autorice y te asigne día, hora y taller.</div>
+    </div>`;
+
+  const tabLibranza = `
+    <div class="portal-card">
+      <div class="portal-card-head">Pedir días libres</div>
+      <div class="multas-grid">
+        <div class="form-row"><label>Desde</label><input type="date" id="plDesde" value="${portalLibranzaForm.desde}"></div>
+        <div class="form-row"><label>Hasta</label><input type="date" id="plHasta" value="${portalLibranzaForm.hasta}"></div>
+      </div>
+      <div class="form-row"><label>Motivo (opcional)</label><input type="text" id="plDetalle" value="${portalLibranzaForm.detalle}" placeholder="Vacaciones, asunto personal..."></div>
+      <button class="save-btn" id="plEnviar">Enviar solicitud</button>
+      <div class="portal-note">Quedará en espera hasta que el gestor la autorice.</div>
+    </div>`;
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="salirRolBtn">← Cambiar rol</button>
+      <div class="sub-title">Hola, ${d.nombre}</div>
+      <span class="live-dot" style="background:var(--green);box-shadow:0 0 0 3px rgba(11,122,85,0.15);"></span>
+    </div>
+    <div style="padding:14px 16px;">
+      <div class="rrhh-tabs">
+        <span class="rrhh-tab ${portalTab==='inicio'?'on':''}" data-ptab="inicio">Inicio</span>
+        <span class="rrhh-tab ${portalTab==='taller'?'on':''}" data-ptab="taller">Pedir taller</span>
+        <span class="rrhh-tab ${portalTab==='libranza'?'on':''}" data-ptab="libranza">Pedir días libres</span>
+      </div>
+      ${portalTab==='inicio' ? tabInicio : portalTab==='taller' ? tabTaller : tabLibranza}
+    </div>
+  `;
+
+  document.getElementById('salirRolBtn').onclick = ()=>{ screen='roles'; currentRole='admin'; renderScreen(); };
+  content.querySelectorAll('[data-ptab]').forEach(el=>{
+    el.onclick = ()=>{ portalTab = el.dataset.ptab; renderPortalScreen(); };
+  });
+
+  if(portalTab==='taller'){
+    document.getElementById('ptEnviar').onclick = ()=>{
+      const motivo = document.getElementById('ptMotivo').value;
+      const detalle = document.getElementById('ptDetalle').value.trim();
+      solicitudes.push({id:nextSolicitudId++, tipo:'taller', driverId:d.id, vehicleId:d.vehicleId,
+        motivo, detalle, creada:new Date(), estado:'Pendiente', cita:null, respuesta:''});
+      addLog(`${d.nombre} solicita taller: ${motivo}`, 'fault');
+      portalTallerForm = {motivo:MOTIVOS_TALLER[0], detalle:''};
+      portalTab='inicio';
+      showToast('Solicitud enviada', 'El gestor la revisará y te avisará con el día y el taller.');
+      renderPortalScreen();
+    };
+  }
+  if(portalTab==='libranza'){
+    document.getElementById('plEnviar').onclick = ()=>{
+      const desde = document.getElementById('plDesde').value;
+      const hasta = document.getElementById('plHasta').value;
+      if(!desde || !hasta){ showToast('Faltan fechas', 'Indica el primer y el último día.'); return; }
+      solicitudes.push({id:nextSolicitudId++, tipo:'libranza', driverId:d.id, vehicleId:d.vehicleId,
+        motivo:'Días libres', detalle:document.getElementById('plDetalle').value.trim(),
+        desde, hasta, creada:new Date(), estado:'Pendiente', cita:null, respuesta:''});
+      addLog(`${d.nombre} solicita días libres (${desde} a ${hasta})`, 'info');
+      portalLibranzaForm = {desde:'', hasta:'', detalle:''};
+      portalTab='inicio';
+      showToast('Solicitud enviada', 'Quedará en espera hasta que el gestor la autorice.');
+      renderPortalScreen();
+    };
+  }
+}
+
+// ============ PANTALLA: SOLICITUDES (gestor) ============
+let solFiltro = 'Pendiente';
+let solAsignando = null;
+function renderSolicitudesScreen(){
+  const content = document.getElementById('content');
+  content.classList.remove('no-pad');
+  const lista = solicitudes.filter(s=> solFiltro==='all' || s.estado===solFiltro)
+    .sort((a,b)=>b.creada-a.creada);
+  const estadoColor = {'Pendiente':'#C8841C','Autorizado':'#0B7A55','Rechazado':'#C0223B'};
+  const pend = solicitudes.filter(s=>s.estado==='Pendiente').length;
+
+  content.innerHTML = `
+    <div class="sub-header">
+      <button class="back-btn" id="backBtn">← Menú</button>
+      <div class="sub-title">Solicitudes${pend?` · ${pend} pendiente${pend===1?'':'s'}`:''}</div>
+    </div>
+    <div style="padding:14px 16px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        ${[['Pendiente','Pendientes'],['Autorizado','Autorizadas'],['Rechazado','Rechazadas'],['all','Todas']].map(([v,l])=>
+          `<span class="filter-chip ${solFiltro===v?'':'off'}" data-solfiltro="${v}" style="--chip-color:#41547a;">${l} (${v==='all'?solicitudes.length:solicitudes.filter(s=>s.estado===v).length})</span>`).join('')}
+      </div>
+      ${lista.length ? lista.map(s=>{
+        const d = drivers.find(x=>x.id===s.driverId);
+        const v = vehicles.find(x=>x.id===s.vehicleId);
+        return `
+        <div class="task-row">
+          <div class="task-row-top">
+            <span class="task-tipo">${d?d.nombre:'—'} · ${s.tipo==='taller'?'Taller · '+s.motivo:'Días libres'}</span>
+            <span class="amos-chip" style="color:${estadoColor[s.estado]};background:${estadoColor[s.estado]}22;">${s.estado.toUpperCase()}</span>
+          </div>
+          <div class="task-meta">
+            ${v?v.plate:'—'} · solicitado el ${formatDate(s.creada)}<br>
+            ${s.tipo==='libranza' ? `Del ${(s.desde||'').split('-').reverse().join('/')} al ${(s.hasta||'').split('-').reverse().join('/')}` : ''}
+            ${s.detalle?`<br>${s.detalle}`:''}
+            ${s.cita?`<br><strong>Cita:</strong> ${s.cita.fecha.split('-').reverse().join('/')} ${s.cita.hora} · ${s.cita.centro}`:''}
+          </div>
+          ${solAsignando===s.id ? `
+            <div class="reg-form" style="margin-top:9px;">
+              <div class="multas-grid">
+                <div class="form-row"><label>Fecha de la cita</label><input type="date" id="solFecha"></div>
+                <div class="form-row"><label>Hora</label><input type="time" id="solHora" value="09:00"></div>
+                <div class="form-row"><label>Taller / centro</label>
+                  <select id="solCentro">${centros.map(c=>`<option>${c.nombre}</option>`).join('')}</select>
+                </div>
+              </div>
+              <button class="save-btn" id="solConfirmar">Autorizar y asignar cita</button>
+            </div>
+          ` : `
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              ${s.estado==='Pendiente' ? (s.tipo==='taller'
+                ? `<button class="toggle-inactive-btn" data-solcita="${s.id}">Autorizar y dar cita</button>`
+                : `<button class="toggle-inactive-btn" data-solok="${s.id}">Autorizar</button>`) : ''}
+              ${s.estado==='Pendiente' ? `<button class="task-del" data-solno="${s.id}">Rechazar</button>` : ''}
+            </div>
+          `}
+        </div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:12.5px;">No hay solicitudes con ese estado.</div>'}
+    </div>
+  `;
+
+  document.getElementById('backBtn').onclick = ()=>{ screen='home'; renderScreen(); };
+  content.querySelectorAll('[data-solfiltro]').forEach(el=>{
+    el.onclick = ()=>{ solFiltro = el.dataset.solfiltro; solAsignando=null; renderSolicitudesScreen(); };
+  });
+  content.querySelectorAll('[data-solcita]').forEach(el=>{
+    el.onclick = ()=>{ solAsignando = parseInt(el.dataset.solcita); renderSolicitudesScreen(); };
+  });
+  content.querySelectorAll('[data-solok]').forEach(el=>{
+    el.onclick = ()=>{
+      const s = solicitudes.find(x=>x.id===parseInt(el.dataset.solok));
+      s.estado='Autorizado'; s.respuesta='Autorizado por el gestor de flota';
+      addNotificacion(s.driverId, `Días libres autorizados: del ${(s.desde||'').split('-').reverse().join('/')} al ${(s.hasta||'').split('-').reverse().join('/')}`, 'ok');
+      const d = drivers.find(x=>x.id===s.driverId);
+      addLog(`Días libres autorizados a ${d?d.nombre:''}`, 'clear');
+      renderSolicitudesScreen();
+    };
+  });
+  content.querySelectorAll('[data-solno]').forEach(el=>{
+    el.onclick = ()=>{
+      const s = solicitudes.find(x=>x.id===parseInt(el.dataset.solno));
+      s.estado='Rechazado'; s.respuesta='No autorizado. Contacta con el gestor de flota.';
+      addNotificacion(s.driverId, 'Tu solicitud no ha sido autorizada. Contacta con el gestor cuando puedas.', 'aviso');
+      renderSolicitudesScreen();
+    };
+  });
+  if(solAsignando){
+    document.getElementById('solConfirmar').onclick = ()=>{
+      const s = solicitudes.find(x=>x.id===solAsignando);
+      const fecha = document.getElementById('solFecha').value;
+      const hora = document.getElementById('solHora').value || '09:00';
+      const centro = document.getElementById('solCentro').value;
+      if(!fecha){ showToast('Falta la fecha', 'Indica el día de la cita.'); return; }
+      s.estado='Autorizado';
+      s.cita = {fecha, hora, centro};
+      s.respuesta = 'Autorizado con cita asignada';
+      const d = drivers.find(x=>x.id===s.driverId);
+      const v = vehicles.find(x=>x.id===s.vehicleId);
+      addNotificacion(s.driverId, `Cita confirmada: ${fecha.split('-').reverse().join('/')} a las ${hora} en ${centro}`, 'ok');
+      // queda como evento planificado del coche
+      if(v){
+        v.tasks.push(makeTask('Cita programada en taller', {
+          limiteType:'fecha', fechaLimite:new Date(fecha+'T'+hora),
+          planificado:new Date(fecha+'T'+hora), centro,
+          notas:`${s.motivo}${s.detalle?' · '+s.detalle:''} (solicitado por ${d?d.nombre:''})`
+        }));
+      }
+      addLog(`Cita asignada a ${d?d.nombre:''} en ${centro} (${fecha} ${hora})`, 'clear');
+      solAsignando = null;
+      renderSolicitudesScreen();
+    };
+  }
+}
+
 let eventosLiveFilter = 'all'; // 'all' | 'fault' | 'clear' | 'share' | 'info'
 function renderEventosLiveScreen(){
   const content = document.getElementById('content');
@@ -6128,6 +6590,9 @@ function renderScreen(){
   else if(screen==='multas') renderMultasScreen();
   else if(screen==='historial') renderHistorialScreen();
   else if(screen==='centros') renderCentrosScreen();
+  else if(screen==='roles') renderRolesScreen();
+  else if(screen==='portal') renderPortalScreen();
+  else if(screen==='solicitudes') renderSolicitudesScreen();
   refreshAlertPill();
 }
 
@@ -6206,6 +6671,7 @@ function tick(){
     }
   });
   revisarAlertasParado();
+  revisarAvisosTurno();
   refreshMapMarkers();
   if(screen==='map') renderMapSelectedBar();
   if(screen==='mantenimiento') renderScreen();

@@ -1290,19 +1290,34 @@ function refreshAlertPill(){
 }
 function renderHeader(){
   const header = document.getElementById('appHeader');
-  if(!loggedIn){
+  // en la pantalla de selección de rol la cabecera va limpia
+  if(!loggedIn || screen==='roles'){
     header.innerHTML = `<div class="brand"><span class="dot"></span>FLOTIA</div>`;
     return;
   }
+  const rol = ROLES_APP.find(r=>r.id===currentRole);
+  const etiqueta = currentRole==='conductor'
+    ? (drivers.find(d=>d.id===rolConductorId)||{}).nombre || 'Conductor'
+    : (rolPropietario || (rol?rol.nombre:(currentUser?currentUser.profile:'')));
   header.innerHTML = `
     <div class="brand"><span class="dot"></span>FLOTIA</div>
     <div class="header-right">
-      <span class="user-chip">${currentUser.profile}</span>
+      <span class="user-chip" style="border-color:${rol?rol.color:'var(--border)'};color:${rol?rol.color:'var(--muted)'};">${rol?rol.nombre:''}${etiqueta && etiqueta!==(rol?rol.nombre:'') ? ' · '+etiqueta : ''}</span>
       <div class="alert-pill" id="alertPill">0 alertas</div>
       <button class="logout-btn" id="logoutBtn">Salir</button>
     </div>
   `;
-  document.getElementById('logoutBtn').onclick = ()=>{ loggedIn=false; currentUser=null; loginView='menu'; selectedId=null; screen='login'; renderScreen(); };
+  document.getElementById('logoutBtn').onclick = ()=>{
+    // volver siempre al selector de rol; solo se pide login de nuevo si está activado
+    currentRole='admin'; rolConductorId=null; rolPropietario=null;
+    selectedId=null; portalTab='inicio'; solAsignando=null;
+    if(SKIP_LOGIN_FOR_TESTING){
+      screen='roles';
+    } else {
+      loggedIn=false; currentUser=null; loginView='menu'; screen='login';
+    }
+    renderScreen();
+  };
 }
 
 // ============ PANTALLA: LOGIN (FLOTIA) ============
@@ -1422,7 +1437,7 @@ function attemptLogin(){
   const password = document.getElementById('loginPassword').value.trim();
   const user = appUsers.find(u=>u.username===username && u.password===password);
   if(user){
-    loggedIn = true; currentUser = user; loginError=''; loginView='menu'; screen='home';
+    loggedIn = true; currentUser = user; loginError=''; loginView='menu'; screen='roles';
     loadColConfig();  // cada usuario recupera su propia configuración de columnas
     histLoadColConfig();
     addLog(`Sesión iniciada como ${user.username} (${user.profile})`, 'clear');
@@ -6573,7 +6588,9 @@ function renderEventosScreen(){
 // ============ Router ============
 function renderScreen(){
   const logEl = document.getElementById('log');
-  if(logEl) logEl.style.display = (screen==='login') ? 'none' : 'flex';
+  // el registro interno no se muestra en login, selector de rol ni portal del conductor
+  const sinLog = (screen==='login' || screen==='roles' || screen==='portal');
+  if(logEl) logEl.style.display = sinLog ? 'none' : 'flex';
   renderHeader();
   if(screen==='login') renderLoginScreen();
   else if(screen==='home') renderHome();

@@ -701,7 +701,15 @@
     border:1px solid #7d8ea6;border-radius:2px;background:#fff;font-size:8px;line-height:1;color:#1a2b45;}
   .td-sel:hover .sel-box{border-color:var(--orange);}
   .td-sel.marcada .sel-box{background:var(--orange);border-color:var(--orange);}
-  .amos-table tr:has(.td-sel.marcada){background:#EAF1FD;}
+  .amos-table tr.fila-marcada > td{background:#DCE8FC !important;}
+  .amos-table tr.amos-veh-row{user-select:none;}
+  .paq-cell{white-space:nowrap;}
+  .paq-tag{display:inline-block;padding:0 6px;border-radius:3px;background:var(--paq-color);color:#fff;
+    font-size:8.5px;font-weight:700;letter-spacing:0.02em;line-height:13px;}
+  .paq-quitar{margin-left:4px;color:#b6bfcc;cursor:pointer;font-size:9px;}
+  .paq-quitar:hover{color:var(--red);}
+  .row-expand{cursor:pointer;}
+  .row-expand:hover{color:var(--orange);}
   .paq-row{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:9px;padding:9px 11px;background:var(--panel);}
   .paq-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
   .grid-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#eef2f8;padding:8px 10px;border-bottom:1px solid #b9c6d6;flex:0 0 auto;}
@@ -3582,11 +3590,11 @@ function renderForecastScreen(){
           case 'paquete': {
             if(t.isObd) return '<td>—</td>';
             const pq = paquetes.find(x=>x.id===t.paqueteId);
-            return `<td class="editable-cell">
-              <select class="cell-select paq-select" data-vid="${v.id}" data-tid="${t.id}" style="${pq?`color:${pq.color};font-weight:700;`:''}">
-                <option value="">—</option>
-                ${paquetes.map(x=>`<option value="${x.id}" ${t.paqueteId===x.id?'selected':''}>${x.nombre}</option>`).join('')}
-              </select></td>`;
+            if(!pq) return '<td class="paq-cell">—</td>';
+            return `<td class="paq-cell">
+              <span class="paq-tag" style="--paq-color:${pq.color};">${pq.nombre}</span>
+              <span class="paq-quitar" data-quitarpaq="${t.id}" title="Sacar del paquete">✕</span>
+            </td>`;
           }
           case 'remanente': return `<td style="color:${info.color};font-weight:700;">${it.remanente.text}</td>`;
           case 'horas': return `<td class="editable-cell">${horasCell}</td>`;
@@ -3604,7 +3612,7 @@ function renderForecastScreen(){
         }
       };
       const mainRow = `
-        <tr class="${v.active===false?'amos-inactive-row':''} ${(t.isObd&&!t.isAlerta&&!t.isSolicitud)?'':'amos-veh-row'} ${t.paqueteId?'en-paquete':''}" ${t.paqueteId?`style="--paq-color:${(paquetes.find(x=>x.id===t.paqueteId)||{}).color||'#0A6ED1'};"`:''} ${(t.isObd&&!t.isAlerta&&!t.isSolicitud)?'':`data-tid2="${t.id}"`}>
+        <tr class="${v.active===false?'amos-inactive-row':''} ${(t.isObd&&!t.isAlerta&&!t.isSolicitud)?'':'amos-veh-row'} ${t.paqueteId?'en-paquete':''} ${forecastSeleccion.has(t.id)?'fila-marcada':''}" ${t.paqueteId?`style="--paq-color:${(paquetes.find(x=>x.id===t.paqueteId)||{}).color||'#0A6ED1'};"`:''} ${(t.isObd&&!t.isAlerta&&!t.isSolicitud)?'':`data-tid2="${t.id}"`}>
           ${COLS_V.map(c=>cellFor(c.key)).join('')}
         </tr>
       `;
@@ -3829,6 +3837,9 @@ function renderForecastScreen(){
       const marcado = forecastSeleccion.has(parseInt(td.dataset.selrow));
       td.classList.toggle('marcada', marcado);
       td.querySelector('.sel-box').textContent = marcado ? '✓' : '';
+    });
+    content.querySelectorAll('[data-tid2]').forEach(tr=>{
+      tr.classList.toggle('fila-marcada', forecastSeleccion.has(parseInt(tr.dataset.tid2)));
     });
     const btn = document.getElementById('nuevoPaqueteBtn');
     if(btn){
@@ -4131,9 +4142,30 @@ function renderForecastScreen(){
       renderScreen();
     };
   });
+  // Clic sobre la línea = seleccionarla. Para desplegar el detalle, la flecha ▸ de la matrícula.
   content.querySelectorAll('.amos-veh-row[data-tid2]').forEach(row=>{
-    row.onclick = ()=>{
-      const tid = parseInt(row.dataset.tid2);
+    const tid = parseInt(row.dataset.tid2);
+    row.onmousedown = (e)=>{
+      // los campos editables y los botones siguen funcionando como siempre
+      if(e.target.closest('input,select,button,.refs-toggle,.row-expand,.obd-goto-link,.paq-quitar,.colfilter-icon')) return;
+      e.preventDefault();
+      seleccionArrastrando = forecastSeleccion.has(tid) ? 'quitar' : 'poner';
+      if(seleccionArrastrando==='poner') forecastSeleccion.add(tid); else forecastSeleccion.delete(tid);
+      pintarSeleccion();
+    };
+    row.onmouseenter = ()=>{
+      if(!seleccionArrastrando) return;
+      if(seleccionArrastrando==='poner') forecastSeleccion.add(tid); else forecastSeleccion.delete(tid);
+      pintarSeleccion();
+    };
+  });
+  // la flecha de la matrícula despliega o pliega el detalle
+  content.querySelectorAll('.row-expand').forEach(el=>{
+    el.onclick = (e)=>{
+      e.stopPropagation();
+      const fila = el.closest('[data-tid2]');
+      if(!fila) return;
+      const tid = parseInt(fila.dataset.tid2);
       forecastExpandedTask[tid] = !forecastExpandedTask[tid];
       forecastCompletingTaskId = null;
       renderScreen();
@@ -4220,9 +4252,13 @@ function renderForecastScreen(){
     inp.onclick = (e)=>e.stopPropagation();
     inp.onchange = (e)=>{ const t = taskOf(inp); const n = parseFloat(e.target.value); if(t) t.costeReal = !isNaN(n)?n:null; };
   });
-  content.querySelectorAll('.paq-select').forEach(sel=>{
-    sel.onclick = (e)=>e.stopPropagation();
-    sel.onchange = (e)=>{ const t = taskOf(sel); if(t) t.paqueteId = e.target.value ? parseInt(e.target.value) : null; renderScreen(); };
+  content.querySelectorAll('[data-quitarpaq]').forEach(el=>{
+    el.onclick = (e)=>{
+      e.stopPropagation();
+      const tid = parseInt(el.dataset.quitarpaq);
+      vehicles.forEach(v=>(v.tasks||[]).forEach(t=>{ if(t.id===tid) t.paqueteId = null; }));
+      renderScreen();
+    };
   });
   content.querySelectorAll('.tipo-select').forEach(sel=>{
     sel.onclick = (e)=>e.stopPropagation();
